@@ -1,56 +1,7 @@
 {
-  "extends": [
-    "next/core-web-vitals",
-    "next/typescript"
-  ],
+  "extends": ["next/core-web-vitals"],
   "rules": {
-    // React specific rules
     "react/no-unescaped-entities": "off",
-    "react/display-name": "off",
-    "react-hooks/exhaustive-deps": "warn",
-    
-    // Next.js specific rules
-    "@next/next/no-img-element": "off",
-    "@next/next/no-html-link-for-pages": "off",
-    
-    // TypeScript specific rules
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      {
-        "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_"
-      }
-    ],
-    "@typescript-eslint/no-explicit-any": "warn",
-    "@typescript-eslint/ban-ts-comment": "warn",
-    
-    // General JavaScript rules
-    "no-console": [
-      "warn",
-      {
-        "allow": ["warn", "error"]
-      }
-    ],
-    "prefer-const": "warn",
-    "no-var": "error",
-    
-    // Import rules
-    "import/no-anonymous-default-export": "off"
-  },
-  "globals": {
-    "React": "readonly"
-  },
-  "env": {
-    "browser": true,
-    "node": true,
-    "es6": true
-  },
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaVersion": 2022,
-    "sourceType": "module",
-    "ecmaFeatures": {
-      "jsx": true
-    }
+    "@next/next/no-img-element": "off"
   }
 }
