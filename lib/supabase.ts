@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { createClientComponentClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import type { Database, Candidate, User, UserRole } from '../types'
 
 // Supabase configuration
@@ -13,10 +12,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 // Client component client
 export const createClientSupabase = () => createClientComponentClient<Database>()
 
-// Server component client
-export const createServerSupabase = () => createServerComponentClient<Database>({ cookies })
-
-// Auth helpers
+// Auth helpers (client-side only)
 export const authHelpers = {
   // Simple login/signup (for demo purposes)
   async signInAnonymously(userRole: UserRole) {
