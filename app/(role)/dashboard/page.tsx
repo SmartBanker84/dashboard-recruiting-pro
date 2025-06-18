@@ -15,10 +15,10 @@ import {
 } from 'lucide-react'
 import { clsx } from 'clsx'
 
-import { ManagerDashboard } from '../../components/ManagerDashboard'
-import { RecruitingDashboard } from '../../components/RecruitingDashboard'
-import { authHelpers } from '../../lib/supabase'
-import type { UserRole, User as UserType } from '../../types'
+import { ManagerDashboard } from '../../../components/ManagerDashboard'
+import { RecruitingDashboard } from '../../../components/RecruitingDashboard'
+import { authHelpers } from '../../../lib/supabase'
+import type { UserRole, User as UserType } from '../../../types'
 
 export default function DashboardPage() {
   const params = useParams()
