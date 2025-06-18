@@ -176,129 +176,133 @@ export default function RootLayout({
         />
         
         {/* Error boundary fallback styling */}
-        <style jsx>{`
-          .error-boundary {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            padding: 2rem;
-            text-align: center;
-          }
-          
-          .error-boundary h1 {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #dc2626;
-            margin-bottom: 1rem;
-          }
-          
-          .error-boundary p {
-            color: #6b7280;
-            margin-bottom: 2rem;
-            max-width: 500px;
-          }
-          
-          .error-boundary button {
-            background-color: #0ea5e9;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-          }
-          
-          .error-boundary button:hover {
-            background-color: #0284c7;
-          }
-        `}</style>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            .error-boundary {
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-direction: column;
+              padding: 2rem;
+              text-align: center;
+            }
+            
+            .error-boundary h1 {
+              font-size: 2rem;
+              font-weight: bold;
+              color: #dc2626;
+              margin-bottom: 1rem;
+            }
+            
+            .error-boundary p {
+              color: #6b7280;
+              margin-bottom: 2rem;
+              max-width: 500px;
+            }
+            
+            .error-boundary button {
+              background-color: #0ea5e9;
+              color: white;
+              padding: 0.75rem 1.5rem;
+              border-radius: 0.5rem;
+              border: none;
+              cursor: pointer;
+              font-weight: 500;
+            }
+            
+            .error-boundary button:hover {
+              background-color: #0284c7;
+            }
+          `
+        }} />
         
         {/* Global styles for consistent scrollbars */}
-        <style jsx global>{`
-          /* Custom scrollbar styles */
-          ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-          }
-          
-          ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 4px;
-          }
-          
-          ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-          }
-          
-          ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-          }
-          
-          /* Focus styles for accessibility */
-          .focus-visible {
-            outline: 2px solid #0ea5e9;
-            outline-offset: 2px;
-          }
-          
-          /* Remove default button focus styles */
-          button:focus {
-            outline: none;
-          }
-          
-          button:focus-visible {
-            outline: 2px solid #0ea5e9;
-            outline-offset: 2px;
-          }
-          
-          /* Smooth transitions for interactive elements */
-          button, a, input, select, textarea {
-            transition: all 0.2s ease-in-out;
-          }
-          
-          /* Loading state for images */
-          img {
-            transition: opacity 0.3s ease-in-out;
-          }
-          
-          img[data-loading="true"] {
-            opacity: 0.5;
-          }
-          
-          /* Print styles */
-          @media print {
-            .no-print {
-              display: none !important;
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Custom scrollbar styles */
+            ::-webkit-scrollbar {
+              width: 8px;
+              height: 8px;
             }
             
-            .print-break {
-              page-break-before: always;
+            ::-webkit-scrollbar-track {
+              background: #f1f5f9;
+              border-radius: 4px;
             }
             
-            body {
-              background: white !important;
-              color: black !important;
+            ::-webkit-scrollbar-thumb {
+              background: #cbd5e1;
+              border-radius: 4px;
             }
-          }
-          
-          /* Motion preferences */
-          @media (prefers-reduced-motion: reduce) {
-            * {
-              animation-duration: 0.01ms !important;
-              animation-iteration-count: 1 !important;
-              transition-duration: 0.01ms !important;
+            
+            ::-webkit-scrollbar-thumb:hover {
+              background: #94a3b8;
             }
-          }
-          
-          /* High contrast mode */
-          @media (prefers-contrast: high) {
-            .shadow-soft {
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+            
+            /* Focus styles for accessibility */
+            .focus-visible {
+              outline: 2px solid #0ea5e9;
+              outline-offset: 2px;
             }
-          }
-        `}</style>
+            
+            /* Remove default button focus styles */
+            button:focus {
+              outline: none;
+            }
+            
+            button:focus-visible {
+              outline: 2px solid #0ea5e9;
+              outline-offset: 2px;
+            }
+            
+            /* Smooth transitions for interactive elements */
+            button, a, input, select, textarea {
+              transition: all 0.2s ease-in-out;
+            }
+            
+            /* Loading state for images */
+            img {
+              transition: opacity 0.3s ease-in-out;
+            }
+            
+            img[data-loading="true"] {
+              opacity: 0.5;
+            }
+            
+            /* Print styles */
+            @media print {
+              .no-print {
+                display: none !important;
+              }
+              
+              .print-break {
+                page-break-before: always;
+              }
+              
+              body {
+                background: white !important;
+                color: black !important;
+              }
+            }
+            
+            /* Motion preferences */
+            @media (prefers-reduced-motion: reduce) {
+              * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+              }
+            }
+            
+            /* High contrast mode */
+            @media (prefers-contrast: high) {
+              .shadow-soft {
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+              }
+            }
+          `
+        }} />
       </body>
     </html>
   )
