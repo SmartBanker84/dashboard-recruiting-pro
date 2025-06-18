@@ -4,7 +4,7 @@ import React from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { AlertCircle, Wifi, WifiOff } from 'lucide-react'
 import { clsx } from 'clsx'
-import type { UserRole } from '../types'
+import type { UserRole } from '../../types'
 
 interface RoleLayoutProps {
   children: React.ReactNode
@@ -137,47 +137,49 @@ export default function RoleLayout({ children }: RoleLayoutProps) {
       )}
 
       {/* Role-specific styles */}
-      <style jsx>{`
-        .role-layout {
-          min-height: 100vh;
-          position: relative;
-        }
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .role-layout {
+            min-height: 100vh;
+            position: relative;
+          }
 
-        .role-content {
-          position: relative;
-          z-index: 1;
-        }
+          .role-content {
+            position: relative;
+            z-index: 1;
+          }
 
-        /* Role-specific styling */
-        .role-content[data-role="manager"] {
-          --role-primary: theme('colors.primary.600');
-          --role-secondary: theme('colors.primary.100');
-        }
+          /* Role-specific styling */
+          .role-content[data-role="manager"] {
+            --role-primary: #2563eb;
+            --role-secondary: #dbeafe;
+          }
 
-        .role-content[data-role="recruiter"] {
-          --role-primary: theme('colors.success.600');
-          --role-secondary: theme('colors.success.100');
-        }
+          .role-content[data-role="recruiter"] {
+            --role-primary: #059669;
+            --role-secondary: #d1fae5;
+          }
 
-        /* Custom scrollbar for role content */
-        .role-content::-webkit-scrollbar {
-          width: 8px;
-        }
+          /* Custom scrollbar for role content */
+          .role-content::-webkit-scrollbar {
+            width: 8px;
+          }
 
-        .role-content::-webkit-scrollbar-track {
-          background: theme('colors.secondary.100');
-        }
+          .role-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+          }
 
-        .role-content::-webkit-scrollbar-thumb {
-          background: var(--role-primary);
-          border-radius: 4px;
-        }
+          .role-content::-webkit-scrollbar-thumb {
+            background: var(--role-primary);
+            border-radius: 4px;
+          }
 
-        .role-content::-webkit-scrollbar-thumb:hover {
-          background: var(--role-primary);
-          opacity: 0.8;
-        }
-      `}</style>
+          .role-content::-webkit-scrollbar-thumb:hover {
+            background: var(--role-primary);
+            opacity: 0.8;
+          }
+        `
+      }} />
     </div>
   )
 }
