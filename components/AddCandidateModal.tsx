@@ -4,112 +4,127 @@ import React from 'react'
 import { 
   X, 
   Upload, 
-  FileText, 
   User, 
   Mail, 
   Phone, 
+  Briefcase, 
+  FileText, 
   MapPin, 
-  Briefcase,
-  DollarSign,
-  MessageSquare,
-  Plus,
-  Loader2,
+  Star,
   AlertCircle,
-  Check
+  Loader2
 } from 'lucide-react'
 import { clsx } from 'clsx'
-import type { 
-  AddCandidateModalProps, 
-  AddCandidateForm, 
-  CandidateStatus, 
-  ExperienceLevel,
-  Candidate 
-} from '../types'
-import { storageHelpers, dbHelpers } from '../lib/supabase'
+import { dbHelpers, storageHelpers } from '../lib/supabase'
+import type { Candidate, ExperienceLevel } from '../types'
 
-interface ExtendedAddCandidateModalProps extends AddCandidateModalProps {
-  candidate?: Candidate // For edit mode
+interface AddCandidateModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: (candidate: Candidate) => void
   userId: string
 }
 
-export function AddCandidateModal({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  candidate, 
-  userId 
-}: ExtendedAddCandidateModalProps) {
+interface AddCandidateForm {
+  full_name: string
+  email: string
+  phone: string
+  position: string
+  experience_level: ExperienceLevel
+  location: string
+  notes: string
+  cv_url: string
+  skills: string[]
+  cv_file?: File
+}
+
+interface FormErrors {
+  full_name?: string
+  email?: string
+  phone?: string
+  position?: string
+  experience_level?: string
+  location?: string
+  notes?: string
+  cv_file?: string
+  skills?: string
+  general?: string
+}
+
+const EXPERIENCE_LEVELS: { value: ExperienceLevel; label: string }[] = [
+  { value: 'junior', label: 'Junior (0-2 anni)' },
+  { value: 'mid', label: 'Mid-level (2-5 anni)' },
+  { value: 'senior', label: 'Senior (5+ anni)' },
+  { value: 'lead', label: 'Lead/Manager' }
+]
+
+export function AddCandidateModal({ isOpen, onClose, onSuccess, userId }: AddCandidateModalProps) {
   const [formData, setFormData] = React.useState<AddCandidateForm>({
     full_name: '',
     email: '',
     phone: '',
     position: '',
-    experience_level: 'mid',
-    status: 'new',
-    notes: '',
-    salary_expectation: undefined,
+    experience_level: 'junior',
     location: '',
-    skills: [],
-    cv_file: undefined
+    notes: '',
+    cv_url: '',
+    skills: []
   })
-  
-  const [errors, setErrors] = React.useState<Partial<AddCandidateForm>>({})
+
+  const [errors, setErrors] = React.useState<FormErrors>({})
   const [loading, setLoading] = React.useState(false)
-  const [cvPreview, setCvPreview] = React.useState<string | null>(null)
+  const [dragActive, setDragActive] = React.useState(false)
   const [skillInput, setSkillInput] = React.useState('')
 
-  const isEditMode = Boolean(candidate)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
-  // Initialize form with candidate data for edit mode
+  // Reset form when modal opens/closes
   React.useEffect(() => {
-    if (candidate && isOpen) {
-      setFormData({
-        full_name: candidate.full_name,
-        email: candidate.email,
-        phone: candidate.phone || '',
-        position: candidate.position,
-        experience_level: candidate.experience_level,
-        status: candidate.status,
-        notes: candidate.notes || '',
-        salary_expectation: candidate.salary_expectation,
-        location: candidate.location || '',
-        skills: candidate.skills,
-        cv_file: undefined
-      })
-      setCvPreview(candidate.cv_url || null)
-    } else if (!candidate && isOpen) {
-      // Reset form for add mode
+    if (isOpen) {
       setFormData({
         full_name: '',
         email: '',
         phone: '',
         position: '',
-        experience_level: 'mid',
-        status: 'new',
-        notes: '',
-        salary_expectation: undefined,
+        experience_level: 'junior',
         location: '',
-        skills: [],
-        cv_file: undefined
+        notes: '',
+        cv_url: '',
+        skills: []
       })
-      setCvPreview(null)
+      setErrors({})
+      setSkillInput('')
     }
-    setErrors({})
-    setSkillInput('')
-  }, [candidate, isOpen])
+  }, [isOpen])
 
-  // Handle form field changes
-  const handleChange = (field: keyof AddCandidateForm, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }))
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {}
+
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = 'Nome completo richiesto'
     }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email richiesta'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Email non valida'
+    }
+
+    if (!formData.position.trim()) {
+      newErrors.position = 'Posizione richiesta'
+    }
+
+    if (formData.phone && !/^[\d\s\-\+\(\)]+$/.test(formData.phone)) {
+      newErrors.phone = 'Numero di telefono non valido'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
-  // Handle file upload
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const handleFileSelect = async (file: File) => {
+    setErrors(prev => ({ ...prev, cv_file: undefined }))
+
     if (file) {
       if (file.type !== 'application/pdf') {
         setErrors(prev => ({ ...prev, cv_file: 'Solo file PDF sono supportati' }))
@@ -119,18 +134,44 @@ export function AddCandidateModal({
         setErrors(prev => ({ ...prev, cv_file: 'Il file deve essere inferiore a 10MB' }))
         return
       }
+
       setFormData(prev => ({ ...prev, cv_file: file }))
-      setErrors(prev => ({ ...prev, cv_file: undefined }))
     }
   }
 
-  // Handle skill addition
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(false)
+    
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(false)
+  }
+
   const addSkill = () => {
     const skill = skillInput.trim()
     if (skill && !formData.skills.includes(skill)) {
-      setFormData(prev => ({ 
-        ...prev, 
-        skills: [...prev.skills, skill] 
+      setFormData(prev => ({
+        ...prev,
+        skills: [...prev.skills, skill]
       }))
       setSkillInput('')
     }
@@ -143,96 +184,67 @@ export function AddCandidateModal({
     }))
   }
 
-  // Form validation
-  const validateForm = (): boolean => {
-    const newErrors: Partial<AddCandidateForm> = {}
-
-    if (!formData.full_name.trim()) {
-      newErrors.full_name = 'Nome completo è richiesto'
+  const handleSkillKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      addSkill()
     }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email è richiesta'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email non valida'
-    }
-
-    if (!formData.position.trim()) {
-      newErrors.position = 'Posizione è richiesta'
-    }
-
-    if (formData.phone && !/^[\+]?[0-9\s\-\(\)]{8,}$/.test(formData.phone)) {
-      newErrors.phone = 'Numero di telefono non valido'
-    }
-
-    if (formData.salary_expectation && formData.salary_expectation < 0) {
-      newErrors.salary_expectation = 'La retribuzione deve essere positiva'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
   }
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!validateForm()) return
+    if (!validateForm()) {
+      return
+    }
 
     setLoading(true)
-    
-    try {
-      let cvUrl = cvPreview
+    setErrors({})
 
-      // Upload CV if a new file was selected
+    try {
+      let cvUrl = formData.cv_url
+
+      // Upload CV if file is provided
       if (formData.cv_file) {
-        const tempId = candidate?.id || `temp-${Date.now()}`
-        const uploadResult = await storageHelpers.uploadCV(formData.cv_file, tempId)
+        const tempCandidateId = `temp-${Date.now()}`
+        const { url, error: uploadError } = await storageHelpers.uploadCV(formData.cv_file, tempCandidateId)
         
-        if (uploadResult.error) {
-          throw new Error(`Errore upload CV: ${uploadResult.error.message}`)
+        if (uploadError) {
+          throw new Error('Errore durante l\'upload del CV')
         }
         
-        cvUrl = uploadResult.url
+        cvUrl = url || ''
       }
 
-      // Prepare candidate data
+      // Create candidate
       const candidateData = {
         full_name: formData.full_name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone.trim() || undefined,
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
         position: formData.position.trim(),
         experience_level: formData.experience_level,
-        status: formData.status,
-        notes: formData.notes.trim() || undefined,
-        salary_expectation: formData.salary_expectation || undefined,
-        location: formData.location.trim() || undefined,
+        location: formData.location.trim(),
+        notes: formData.notes.trim(),
+        cv_url: cvUrl,
         skills: formData.skills,
-        cv_url: cvUrl || undefined,
+        status: 'new' as const,
         recruiter_id: userId
       }
 
-      let result
-      if (isEditMode && candidate) {
-        // Update existing candidate
-        result = await dbHelpers.updateCandidate(candidate.id, candidateData)
-      } else {
-        // Create new candidate
-        result = await dbHelpers.addCandidate(candidateData)
+      const { data: candidate, error } = await dbHelpers.addCandidate(candidateData)
+
+      if (error) {
+        throw new Error(error.message)
       }
 
-      if (result.error) {
-        throw new Error(result.error.message)
+      if (candidate) {
+        onSuccess(candidate)
+        onClose()
       }
-
-      onSuccess()
-      onClose()
     } catch (error) {
-      console.error('Submit error:', error)
-      setErrors({ 
-        full_name: error instanceof Error 
-          ? error.message 
-          : 'Si è verificato un errore durante il salvataggio' 
+      console.error('Error adding candidate:', error)
+      setErrors({
+        general: error instanceof Error ? error.message : 'Errore durante l\'aggiunta del candidato'
       })
     } finally {
       setLoading(false)
@@ -242,384 +254,301 @@ export function AddCandidateModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all">
-          {/* Header */}
-          <div className="border-b border-secondary-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-secondary-900">
-                {isEditMode ? 'Modifica Candidato' : 'Aggiungi Candidato'}
-              </h2>
-              <button
-                onClick={onClose}
-                className="rounded-lg p-2 text-secondary-400 hover:bg-secondary-100 hover:text-secondary-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Aggiungi Nuovo Candidato
+            </h2>
+            <p className="text-sm text-gray-600">
+              Compila le informazioni del candidato
+            </p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6">
-            <div className="space-y-6">
-              {/* Personal Information */}
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-secondary-900">
-                  <User className="h-5 w-5 text-primary-600" />
-                  Informazioni Personali
-                </h3>
-                
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <FormField
-                    label="Nome Completo"
-                    icon={<User className="h-4 w-4" />}
-                    required
-                    error={errors.full_name}
-                  >
-                    <input
-                      type="text"
-                      value={formData.full_name}
-                      onChange={(e) => handleChange('full_name', e.target.value)}
-                      className="form-input"
-                      placeholder="Mario Rossi"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Email"
-                    icon={<Mail className="h-4 w-4" />}
-                    required
-                    error={errors.email}
-                  >
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
-                      className="form-input"
-                      placeholder="mario.rossi@email.com"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Telefono"
-                    icon={<Phone className="h-4 w-4" />}
-                    error={errors.phone}
-                  >
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleChange('phone', e.target.value)}
-                      className="form-input"
-                      placeholder="+39 123 456 7890"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Località"
-                    icon={<MapPin className="h-4 w-4" />}
-                    error={errors.location}
-                  >
-                    <input
-                      type="text"
-                      value={formData.location}
-                      onChange={(e) => handleChange('location', e.target.value)}
-                      className="form-input"
-                      placeholder="Milano, Italia"
-                    />
-                  </FormField>
-                </div>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6">
+          {errors.general && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2 text-red-800">
+                <AlertCircle className="h-5 w-5" />
+                <span className="font-medium">Errore:</span>
+                <span>{errors.general}</span>
               </div>
-
-              {/* Professional Information */}
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-secondary-900">
-                  <Briefcase className="h-5 w-5 text-primary-600" />
-                  Informazioni Professionali
-                </h3>
-                
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <FormField
-                    label="Posizione"
-                    icon={<Briefcase className="h-4 w-4" />}
-                    required
-                    error={errors.position}
-                  >
-                    <input
-                      type="text"
-                      value={formData.position}
-                      onChange={(e) => handleChange('position', e.target.value)}
-                      className="form-input"
-                      placeholder="Frontend Developer"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Livello Esperienza"
-                    error={errors.experience_level}
-                  >
-                    <select
-                      value={formData.experience_level}
-                      onChange={(e) => handleChange('experience_level', e.target.value as ExperienceLevel)}
-                      className="form-input"
-                    >
-                      <option value="junior">Junior</option>
-                      <option value="mid">Mid-level</option>
-                      <option value="senior">Senior</option>
-                      <option value="lead">Lead/Manager</option>
-                    </select>
-                  </FormField>
-
-                  <FormField
-                    label="Stato"
-                    error={errors.status}
-                  >
-                    <select
-                      value={formData.status}
-                      onChange={(e) => handleChange('status', e.target.value as CandidateStatus)}
-                      className="form-input"
-                    >
-                      <option value="new">Nuovo</option>
-                      <option value="screening">Screening</option>
-                      <option value="interview">Colloquio</option>
-                      <option value="offer">Offerta</option>
-                      <option value="hired">Assunto</option>
-                      <option value="rejected">Scartato</option>
-                    </select>
-                  </FormField>
-
-                  <FormField
-                    label="RAL Richiesta (€)"
-                    icon={<DollarSign className="h-4 w-4" />}
-                    error={errors.salary_expectation}
-                  >
-                    <input
-                      type="number"
-                      value={formData.salary_expectation || ''}
-                      onChange={(e) => handleChange('salary_expectation', e.target.value ? parseInt(e.target.value) : undefined)}
-                      className="form-input"
-                      placeholder="50000"
-                      min="0"
-                    />
-                  </FormField>
-                </div>
-              </div>
-
-              {/* Skills */}
-              <div>
-                <h3 className="mb-4 text-lg font-medium text-secondary-900">
-                  Competenze
-                </h3>
-                
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={skillInput}
-                      onChange={(e) => setSkillInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                      className="form-input flex-1"
-                      placeholder="Aggiungi competenza (es. React, TypeScript)"
-                    />
-                    <button
-                      type="button"
-                      onClick={addSkill}
-                      className="rounded-lg border border-primary-300 bg-primary-50 px-4 py-2 text-primary-700 hover:bg-primary-100"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                  
-                  {formData.skills.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-3 py-1 text-sm text-primary-800"
-                        >
-                          {skill}
-                          <button
-                            type="button"
-                            onClick={() => removeSkill(skill)}
-                            className="text-primary-600 hover:text-primary-800"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* CV Upload */}
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-secondary-900">
-                  <FileText className="h-5 w-5 text-primary-600" />
-                  Curriculum Vitae
-                </h3>
-                
-                <CVUpload
-                  file={formData.cv_file}
-                  currentUrl={cvPreview}
-                  onFileChange={handleFileChange}
-                  error={errors.cv_file}
-                />
-              </div>
-
-              {/* Notes */}
-              <FormField
-                label="Note"
-                icon={<MessageSquare className="h-4 w-4" />}
-                error={errors.notes}
-              >
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => handleChange('notes', e.target.value)}
-                  className="form-input min-h-[100px] resize-none"
-                  placeholder="Note aggiuntive sul candidato..."
-                />
-              </FormField>
             </div>
+          )}
 
-            {/* Actions */}
-            <div className="mt-8 flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg border border-secondary-300 px-4 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
-                disabled={loading}
-              >
-                Annulla
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Nome completo */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <User className="inline h-4 w-4 mr-1" />
+                Nome Completo *
+              </label>
+              <input
+                type="text"
+                value={formData.full_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                className={clsx(
+                  'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                  errors.full_name ? 'border-red-300' : 'border-gray-300'
                 )}
-                {isEditMode ? 'Aggiorna' : 'Aggiungi'} Candidato
-              </button>
+                placeholder="Es. Mario Rossi"
+              />
+              {errors.full_name && (
+                <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
+              )}
             </div>
-          </form>
-        </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Mail className="inline h-4 w-4 mr-1" />
+                Email *
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                className={clsx(
+                  'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                  errors.email ? 'border-red-300' : 'border-gray-300'
+                )}
+                placeholder="mario.rossi@email.com"
+              />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
+            </div>
+
+            {/* Telefono */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Phone className="inline h-4 w-4 mr-1" />
+                Telefono
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                className={clsx(
+                  'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                  errors.phone ? 'border-red-300' : 'border-gray-300'
+                )}
+                placeholder="+39 123 456 7890"
+              />
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+              )}
+            </div>
+
+            {/* Posizione */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Briefcase className="inline h-4 w-4 mr-1" />
+                Posizione *
+              </label>
+              <input
+                type="text"
+                value={formData.position}
+                onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
+                className={clsx(
+                  'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                  errors.position ? 'border-red-300' : 'border-gray-300'
+                )}
+                placeholder="Es. Frontend Developer"
+              />
+              {errors.position && (
+                <p className="mt-1 text-sm text-red-600">{errors.position}</p>
+              )}
+            </div>
+
+            {/* Livello esperienza */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Star className="inline h-4 w-4 mr-1" />
+                Livello di Esperienza
+              </label>
+              <select
+                value={formData.experience_level}
+                onChange={(e) => setFormData(prev => ({ ...prev, experience_level: e.target.value as ExperienceLevel }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {EXPERIENCE_LEVELS.map(level => (
+                  <option key={level.value} value={level.value}>
+                    {level.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Località */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <MapPin className="inline h-4 w-4 mr-1" />
+                Località
+              </label>
+              <input
+                type="text"
+                value={formData.location}
+                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Es. Milano, Italia"
+              />
+            </div>
+
+            {/* CV Upload */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <FileText className="inline h-4 w-4 mr-1" />
+                CV (PDF)
+              </label>
+              <div
+                className={clsx(
+                  'border-2 border-dashed rounded-lg p-6 text-center transition-colors',
+                  dragActive 
+                    ? 'border-blue-400 bg-blue-50' 
+                    : errors.cv_file
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-300 hover:border-gray-400'
+                )}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                
+                {formData.cv_file ? (
+                  <div className="flex items-center justify-center gap-2 text-green-600">
+                    <FileText className="h-6 w-6" />
+                    <span className="font-medium">{formData.cv_file.name}</span>
+                  </div>
+                ) : (
+                  <div>
+                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600 mb-2">
+                      Trascina qui il CV o{' '}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-blue-600 font-medium hover:text-blue-700"
+                      >
+                        scegli file
+                      </button>
+                    </p>
+                    <p className="text-xs text-gray-500">Solo PDF, max 10MB</p>
+                  </div>
+                )}
+              </div>
+              {errors.cv_file && (
+                <p className="mt-1 text-sm text-red-600">{errors.cv_file}</p>
+              )}
+            </div>
+
+            {/* Skills */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Competenze
+              </label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyPress={handleSkillKeyPress}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Es. React, JavaScript, Python..."
+                />
+                <button
+                  type="button"
+                  onClick={addSkill}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Aggiungi
+                </button>
+              </div>
+              
+              {formData.skills.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.skills.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                    >
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill)}
+                        className="ml-1 text-blue-600 hover:text-blue-800"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Note */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Note
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Note aggiuntive sul candidato..."
+              />
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex gap-3 pt-6 border-t border-gray-200 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annulla
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className={clsx(
+                'flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg transition-colors',
+                loading 
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : 'hover:bg-blue-700'
+              )}
+            >
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Aggiunta in corso...
+                </div>
+              ) : (
+                'Aggiungi Candidato'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
 }
-
-// Form field component
-interface FormFieldProps {
-  label: string
-  icon?: React.ReactNode
-  required?: boolean
-  error?: string
-  children: React.ReactNode
-}
-
-function FormField({ label, icon, required, error, children }: FormFieldProps) {
-  return (
-    <div>
-      <label className="mb-2 block text-sm font-medium text-secondary-700">
-        <span className="flex items-center gap-2">
-          {icon}
-          {label}
-          {required && <span className="text-red-500">*</span>}
-        </span>
-      </label>
-      {children}
-      {error && (
-        <div className="mt-1 flex items-center gap-1 text-sm text-red-600">
-          <AlertCircle className="h-4 w-4" />
-          {error}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// CV Upload component
-interface CVUploadProps {
-  file?: File
-  currentUrl?: string | null
-  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  error?: string
-}
-
-function CVUpload({ file, currentUrl, onFileChange, error }: CVUploadProps) {
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
-
-  return (
-    <div>
-      <div
-        onClick={() => fileInputRef.current?.click()}
-        className={clsx(
-          'cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors',
-          error
-            ? 'border-red-300 bg-red-50'
-            : 'border-secondary-300 bg-secondary-50 hover:border-primary-400 hover:bg-primary-50'
-        )}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf"
-          onChange={onFileChange}
-          className="hidden"
-        />
-        
-        <Upload className="mx-auto h-8 w-8 text-secondary-400 mb-2" />
-        
-        {file ? (
-          <div>
-            <p className="text-sm font-medium text-secondary-900">{file.name}</p>
-            <p className="text-xs text-secondary-500">
-              {(file.size / 1024 / 1024).toFixed(2)} MB
-            </p>
-          </div>
-        ) : currentUrl ? (
-          <div>
-            <p className="text-sm font-medium text-secondary-900">CV già caricato</p>
-            <p className="text-xs text-secondary-500">Clicca per sostituire</p>
-          </div>
-        ) : (
-          <div>
-            <p className="text-sm font-medium text-secondary-900">
-              Carica CV (PDF)
-            </p>
-            <p className="text-xs text-secondary-500">
-              Clicca o trascina per caricare il file
-            </p>
-          </div>
-        )}
-      </div>
-      
-      {error && (
-        <div className="mt-2 flex items-center gap-1 text-sm text-red-600">
-          <AlertCircle className="h-4 w-4" />
-          {error}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Additional styles for form inputs
-const formInputStyles = `
-  .form-input {
-    @apply w-full rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm text-secondary-900 placeholder-secondary-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20;
-  }
-`
-
-export default AddCandidateModal
