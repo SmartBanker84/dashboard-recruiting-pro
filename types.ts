@@ -1,3 +1,5 @@
+import React from 'react'
+
 // User types
 export type UserRole = 'manager' | 'recruiter'
 
@@ -165,6 +167,90 @@ export interface ExperienceConfig {
   label: string
   description: string
   yearsRange: string
+}
+
+// KPI Component types
+export interface KPICardProps {
+  title: string
+  value: string | number
+  change?: number
+  changeLabel?: string
+  icon: React.ReactNode
+  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'gray'
+  loading?: boolean
+}
+
+export interface KPIGridProps {
+  data: KPIData
+  loading?: boolean
+}
+
+// Chart component types
+export interface LineChartProps {
+  data: ChartData[]
+  height?: number
+  showGrid?: boolean
+  showLegend?: boolean
+}
+
+export interface BarChartProps {
+  data: ChartData[]
+  height?: number
+  showGrid?: boolean
+  showLegend?: boolean
+}
+
+export interface PieChartProps {
+  data: Array<{
+    name: string
+    value: number
+    color?: string
+  }>
+  height?: number
+  showLegend?: boolean
+}
+
+// Table component types
+export interface TableColumn<T> {
+  key: keyof T
+  label: string
+  sortable?: boolean
+  render?: (value: any, row: T) => React.ReactNode
+  width?: string
+}
+
+export interface TableProps<T> {
+  data: T[]
+  columns: TableColumn<T>[]
+  loading?: boolean
+  sortConfig?: SortConfig<T>
+  onSort?: (key: keyof T) => void
+  onRowClick?: (row: T) => void
+}
+
+// Form component types
+export interface FormFieldProps {
+  label: string
+  name: string
+  type?: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'file'
+  placeholder?: string
+  required?: boolean
+  options?: Array<{ value: string; label: string }>
+  error?: string
+  value?: any
+  onChange?: (value: any) => void
+}
+
+// Button component types
+export interface ButtonProps {
+  children: React.ReactNode
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
+  size?: 'sm' | 'md' | 'lg'
+  loading?: boolean
+  disabled?: boolean
+  onClick?: () => void
+  type?: 'button' | 'submit' | 'reset'
+  className?: string
 }
 
 // Export default type for convenience
