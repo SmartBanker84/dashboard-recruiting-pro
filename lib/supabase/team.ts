@@ -1,5 +1,9 @@
-// Se già hai altre export, aggiungi questa!
+export async function inviteTeamMember(email: string) {
+  // Dummy implementation per build
+  return { success: true }
+}
+
 export async function getTeamMembers() {
-  // Dummy implementation
+  // Dummy implementation per build
   return []
 }
