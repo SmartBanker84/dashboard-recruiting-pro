@@ -43,11 +43,11 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
   const [loading, setLoading] = React.useState(true)
   const [refreshing, setRefreshing] = React.useState(false)
   const [selectedDateRange, setSelectedDateRange] = React.useState<{
-    from: Date
-    to: Date
+    start: Date
+    end: Date
   }>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date())
+    start: startOfMonth(new Date()),
+    end: endOfMonth(new Date())
   })
   const [showAddModal, setShowAddModal] = React.useState(false)
   const [editingCandidate, setEditingCandidate] = React.useState<Candidate | null>(null)
@@ -165,14 +165,14 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
 
     const totalCandidates = candidates.length
     const thisMonth = candidates.filter(c => 
-      new Date(c.created_at) >= selectedDateRange.from &&
-      new Date(c.created_at) <= selectedDateRange.to
+      new Date(c.created_at) >= selectedDateRange.start &&
+      new Date(c.created_at) <= selectedDateRange.end
     ).length
 
     const previousMonth = candidates.filter(c => {
       const date = new Date(c.created_at)
-      const prevStart = subDays(selectedDateRange.from, 30)
-      const prevEnd = subDays(selectedDateRange.to, 30)
+      const prevStart = subDays(selectedDateRange.start, 30)
+      const prevEnd = subDays(selectedDateRange.end, 30)
       return date >= prevStart && date <= prevEnd
     }).length
 
@@ -220,10 +220,10 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
         <div className="flex flex-wrap gap-3">
           {/* Date range selector */}
           <select
-            value={`${selectedDateRange.from.toISOString()}-${selectedDateRange.to.toISOString()}`}
+            value={`${selectedDateRange.start.toISOString()}-${selectedDateRange.end.toISOString()}`}
             onChange={(e) => {
-              const [from, to] = e.target.value.split('-').map(d => new Date(d))
-              setSelectedDateRange({ from, to })
+              const [start, end] = e.target.value.split('-').map(d => new Date(d))
+              setSelectedDateRange({ start, end })
             }}
             className="rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm"
           >
