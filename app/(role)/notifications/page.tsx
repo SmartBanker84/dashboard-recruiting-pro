@@ -9,7 +9,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getUserNotifications().then(data => {
+    getUserNotifications('dummy-user-id').then(data => {
       setNotifications(data || [])
       setLoading(false)
     })
