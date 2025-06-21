@@ -75,6 +75,18 @@ export interface CandidateFilters {
   }
 }
 
+// Search and sort types
+export interface SortConfig<T> {
+  key: keyof T
+  direction: 'asc' | 'desc'
+}
+
+export interface SearchConfig {
+  query: string
+  fields: string[]
+  caseSensitive: boolean
+}
+
 // API Response types
 export interface ApiResponse<T> {
   data: T | null
@@ -169,14 +181,14 @@ export interface ExperienceConfig {
   yearsRange: string
 }
 
-// KPI Component types
+// KPI Component types - QUESTA È LA RIGA IMPORTANTE DA CAMBIARE
 export interface KPICardProps {
   title: string
   value: string | number
   change?: number
   changeLabel?: string
   icon: React.ReactNode
-  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'gray'
+  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'gray' | 'primary'
   loading?: boolean
 }
 
