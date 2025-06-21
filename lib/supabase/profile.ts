@@ -1,4 +1,5 @@
-export async function getUserProfile(userId: string) {
-  // Dummy placeholder
-  return { id: userId, full_name: "Demo User", email: "demo@example.com", role: "manager" }
+// Se già hai altre export, aggiungi questa!
+export async function updateUserProfile(userId: string, updates: any) {
+  // Dummy implementation
+  return { success: true }
 }
