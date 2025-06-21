@@ -56,6 +56,14 @@ export interface KPIData {
   conversionRate: number
 }
 
+// Monthly data type for charts/dashboard
+export interface MonthlyData {
+  month: string
+  candidates: number
+  hired: number
+  interviews: number
+}
+
 export interface ChartData {
   month: string
   candidates: number
@@ -181,7 +189,7 @@ export interface ExperienceConfig {
   yearsRange: string
 }
 
-// KPI Component types (INTEGRAZIONE QUI)
+// KPI Component types
 export type KPIColor = 'primary' | 'success' | 'warning' | 'danger'
 
 export interface KPICardProps {
@@ -201,14 +209,14 @@ export interface KPIGridProps {
 
 // Chart component types
 export interface LineChartProps {
-  data: ChartData[]
+  data: MonthlyData[]
   height?: number
   showGrid?: boolean
   showLegend?: boolean
 }
 
 export interface BarChartProps {
-  data: ChartData[]
+  data: MonthlyData[]
   height?: number
   showGrid?: boolean
   showLegend?: boolean
