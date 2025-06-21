@@ -176,7 +176,7 @@ export interface KPICardProps {
   change?: number
   changeLabel?: string
   icon: React.ReactNode
-  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'gray' | 'primary'
+  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'gray'
   loading?: boolean
 }
 
