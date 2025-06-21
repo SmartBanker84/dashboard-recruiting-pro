@@ -71,8 +71,8 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
       
       const [candidatesResult, kpiResult, monthlyResult] = await Promise.all([
         dbHelpers.getCandidates(candidateFilters),
-        dbHelpers.getKPIData(candidateFilters.recruiter),
-        dbHelpers.getMonthlyData(candidateFilters.recruiter)
+        dbHelpers.getKPIData(candidateFilters.recruiter?.[0]),
+        dbHelpers.getMonthlyData(candidateFilters.recruiter?.[0])
       ])
 
       if (candidatesResult.data) {
