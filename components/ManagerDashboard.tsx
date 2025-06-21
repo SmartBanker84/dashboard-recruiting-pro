@@ -32,7 +32,7 @@ import type {
   KPIData, 
   MonthlyData, 
   DashboardProps, 
-  FilterOptions 
+  CandidateFilters
 } from '../types'
 
 export function ManagerDashboard({ userRole, userId }: DashboardProps) {
@@ -64,14 +64,15 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
       setLoading(true)
       
       // Load candidates with filters
-      const candidateFilters = {
-        recruiterId: selectedRecruiter === 'all' ? undefined : selectedRecruiter
+      const candidateFilters: CandidateFilters = {
+        recruiter: selectedRecruiter === 'all' ? undefined : [selectedRecruiter],
+        dateRange: selectedDateRange
       }
       
       const [candidatesResult, kpiResult, monthlyResult] = await Promise.all([
         dbHelpers.getCandidates(candidateFilters),
-        dbHelpers.getKPIData(candidateFilters.recruiterId),
-        dbHelpers.getMonthlyData(candidateFilters.recruiterId)
+        dbHelpers.getKPIData(candidateFilters.recruiter),
+        dbHelpers.getMonthlyData(candidateFilters.recruiter)
       ])
 
       if (candidatesResult.data) {
@@ -108,7 +109,7 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
 
   const handleExportExcel = async () => {
     try {
-      const filters: FilterOptions = {
+      const filters: CandidateFilters = {
         dateRange: selectedDateRange,
         recruiter: selectedRecruiter === 'all' ? undefined : [selectedRecruiter]
       }
@@ -182,7 +183,7 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
     const avgSalary = candidates
       .filter(c => c.salary_expectation)
       .reduce((sum, c) => sum + (c.salary_expectation || 0), 0) / 
-      candidates.filter(c => c.salary_expectation).length || 0
+      (candidates.filter(c => c.salary_expectation).length || 1)
 
     const topPositions = candidates
       .reduce((acc, candidate) => {
