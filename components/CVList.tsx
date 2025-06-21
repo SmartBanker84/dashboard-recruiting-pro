@@ -1,32 +1,15 @@
 'use client'
 
 import React from 'react'
-import { 
-  FileText, 
-  Download, 
-  Eye, 
-  Search, 
-  Filter, 
-  SortAsc, 
-  SortDesc,
-  Calendar,
-  User,
-  Briefcase,
-  MapPin,
-  Star,
-  ChevronDown,
-  X,
-  AlertCircle,
-  Loader2
-} from 'lucide-react'
-import { clsx } from 'clsx'
-import { dbHelpers } from '../lib/supabase'
 import type { Candidate, ExperienceLevel, CandidateStatus } from '../types'
 
-interface CVListProps {
+export interface CVListProps {
   candidates: Candidate[]
   loading?: boolean
   onRefresh?: () => void
+  onEdit?: (candidate: Candidate) => void
+  onDelete?: (candidateId: string) => void
+  onViewCV?: (url: string) => void
 }
 
 interface SortConfig {
@@ -56,7 +39,14 @@ const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string }[] = [
   { value: 'lead', label: 'Lead' }
 ]
 
-export function CVList({ candidates, loading = false, onRefresh }: CVListProps) {
+export function CVList({ 
+  candidates, 
+  loading = false, 
+  onRefresh, 
+  onEdit, 
+  onDelete, 
+  onViewCV 
+}: CVListProps) {
   const [sortConfig, setSortConfig] = React.useState<SortConfig>({
     key: 'created_at',
     direction: 'desc'
@@ -78,17 +68,14 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
       const aValue = a[sortConfig.key]
       const bValue = b[sortConfig.key]
 
-      // Handle undefined values
       if (aValue === undefined && bValue === undefined) return 0
       if (aValue === undefined) return sortConfig.direction === 'asc' ? -1 : 1
       if (bValue === undefined) return sortConfig.direction === 'asc' ? 1 : -1
 
-      // Handle null values
       if (aValue === null && bValue === null) return 0
       if (aValue === null) return sortConfig.direction === 'asc' ? -1 : 1
       if (bValue === null) return sortConfig.direction === 'asc' ? 1 : -1
 
-      // Compare non-null, non-undefined values
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
       return 0
@@ -98,7 +85,6 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
   // Filter candidates
   const filteredCandidates = React.useMemo(() => {
     return sortedCandidates.filter(candidate => {
-      // Search filter
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase()
         const searchableText = [
@@ -114,12 +100,10 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
         }
       }
 
-      // Status filter
       if (filters.status.length > 0 && !filters.status.includes(candidate.status)) {
         return false
       }
 
-      // Experience filter
       if (filters.experience.length > 0 && !filters.experience.includes(candidate.experience_level)) {
         return false
       }
@@ -182,7 +166,7 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <span className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4">⏳</span>
           <p className="text-gray-600">Caricamento CV...</p>
         </div>
       </div>
@@ -201,9 +185,7 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
         </div>
 
         <div className="flex gap-3">
-          {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
               placeholder="Cerca candidati..."
@@ -213,7 +195,6 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
             />
           </div>
 
-          {/* Filter toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={clsx(
@@ -223,22 +204,16 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
                 : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             )}
           >
-            <Filter className="h-4 w-4" />
             Filtri
             {hasActiveFilters && (
               <span className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 {filters.status.length + filters.experience.length + (filters.search ? 1 : 0)}
               </span>
             )}
-            <ChevronDown className={clsx(
-              'h-4 w-4 transition-transform',
-              showFilters && 'transform rotate-180'
-            )} />
           </button>
         </div>
       </div>
 
-      {/* Filters panel */}
       {showFilters && (
         <div className="bg-gray-50 rounded-lg p-4 space-y-4">
           <div className="flex items-center justify-between">
@@ -248,14 +223,12 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
                 onClick={clearFilters}
                 className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
               >
-                <X className="h-4 w-4" />
                 Cancella tutti
               </button>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Status filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Stato
@@ -280,7 +253,6 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
               </div>
             </div>
 
-            {/* Experience filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Esperienza
@@ -308,10 +280,8 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
         </div>
       )}
 
-      {/* CV List */}
       {filteredCandidates.length === 0 ? (
         <div className="text-center py-12">
-          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             {candidates.length === 0 ? 'Nessun CV disponibile' : 'Nessun risultato'}
           </h3>
@@ -331,7 +301,6 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Sort controls */}
           <div className="flex gap-2 text-sm">
             <span className="text-gray-600">Ordina per:</span>
             <SortButton
@@ -354,14 +323,15 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
             />
           </div>
 
-          {/* CV Cards */}
           <div className="grid gap-4">
             {filteredCandidates.map(candidate => (
               <CVCard
                 key={candidate.id}
                 candidate={candidate}
-                onDownload={() => downloadCV(candidate)}
-                onPreview={() => previewCV(candidate)}
+                onDownload={() => onViewCV ? onViewCV(candidate.cv_url!) : downloadCV(candidate)}
+                onPreview={() => onViewCV ? onViewCV(candidate.cv_url!) : previewCV(candidate)}
+                onEdit={onEdit}
+                onDelete={onDelete}
               />
             ))}
           </div>
@@ -371,7 +341,6 @@ export function CVList({ candidates, loading = false, onRefresh }: CVListProps) 
   )
 }
 
-// Sort button component
 interface SortButtonProps {
   label: string
   active: boolean
@@ -391,20 +360,21 @@ function SortButton({ label, active, direction, onClick }: SortButtonProps) {
       )}
     >
       {label}
-      {active && direction === 'asc' && <SortAsc className="h-3 w-3" />}
-      {active && direction === 'desc' && <SortDesc className="h-3 w-3" />}
+      {active && direction === 'asc' && <span>▲</span>}
+      {active && direction === 'desc' && <span>▼</span>}
     </button>
   )
 }
 
-// CV card component
 interface CVCardProps {
   candidate: Candidate
   onDownload: () => void
   onPreview: () => void
+  onEdit?: (candidate: Candidate) => void
+  onDelete?: (candidateId: string) => void
 }
 
-function CVCard({ candidate, onDownload, onPreview }: CVCardProps) {
+function CVCard({ candidate, onDownload, onPreview, onEdit, onDelete }: CVCardProps) {
   const statusOption = STATUS_OPTIONS.find(s => s.value === candidate.status)
   const experienceOption = EXPERIENCE_OPTIONS.find(e => e.value === candidate.experience_level)
 
@@ -415,7 +385,7 @@ function CVCard({ candidate, onDownload, onPreview }: CVCardProps) {
           <div className="flex items-center gap-3 mb-2">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <User className="h-5 w-5 text-blue-600" />
+                <span role="img" aria-label="user">👤</span>
               </div>
             </div>
             
@@ -429,10 +399,9 @@ function CVCard({ candidate, onDownload, onPreview }: CVCardProps) {
             </div>
 
             {statusOption && (
-              <span className={clsx(
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                statusOption.color
-              )}>
+              <span className={
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + statusOption.color
+              }>
                 {statusOption.label}
               </span>
             )}
@@ -440,20 +409,20 @@ function CVCard({ candidate, onDownload, onPreview }: CVCardProps) {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-gray-600">
             <div className="flex items-center gap-1">
-              <Briefcase className="h-4 w-4" />
+              <span role="img" aria-label="briefcase">💼</span>
               <span className="truncate">{candidate.position}</span>
             </div>
             
             {experienceOption && (
               <div className="flex items-center gap-1">
-                <Star className="h-4 w-4" />
+                <span role="img" aria-label="star">⭐</span>
                 <span>{experienceOption.label}</span>
               </div>
             )}
             
             {candidate.location && (
               <div className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
+                <span role="img" aria-label="map">📍</span>
                 <span className="truncate">{candidate.location}</span>
               </div>
             )}
@@ -478,7 +447,7 @@ function CVCard({ candidate, onDownload, onPreview }: CVCardProps) {
           )}
 
           <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
-            <Calendar className="h-3 w-3" />
+            <span role="img" aria-label="calendar">📅</span>
             <span>
               Aggiunto il {new Date(candidate.created_at).toLocaleDateString('it-IT')}
             </span>
@@ -486,7 +455,7 @@ function CVCard({ candidate, onDownload, onPreview }: CVCardProps) {
         </div>
 
         {/* CV Actions */}
-        <div className="flex-shrink-0 ml-4">
+        <div className="flex-shrink-0 ml-4 flex flex-col gap-2">
           {candidate.cv_url ? (
             <div className="flex gap-2">
               <button
@@ -494,24 +463,46 @@ function CVCard({ candidate, onDownload, onPreview }: CVCardProps) {
                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 title="Anteprima CV"
               >
-                <Eye className="h-4 w-4" />
+                <span role="img" aria-label="eye">👁️</span>
               </button>
               <button
                 onClick={onDownload}
                 className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                 title="Scarica CV"
               >
-                <Download className="h-4 w-4" />
+                <span role="img" aria-label="download">⬇️</span>
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-1 text-xs text-gray-500">
-              <AlertCircle className="h-3 w-3" />
+              <span role="img" aria-label="alert">⚠️</span>
               <span>CV non disponibile</span>
             </div>
           )}
+          <div className="flex gap-2 mt-2">
+            {onEdit && (
+              <button
+                onClick={() => onEdit(candidate)}
+                className="text-secondary-600 hover:underline text-xs"
+                title="Modifica"
+              >
+                Modifica
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={() => onDelete(candidate.id)}
+                className="text-danger-600 hover:underline text-xs"
+                title="Elimina"
+              >
+                Elimina
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
   )
 }
+
+export default CVList
