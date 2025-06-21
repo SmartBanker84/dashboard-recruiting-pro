@@ -1,6 +1,5 @@
-// ...eventuali altre export...
-
-export async function inviteTeamMember(email: string) {
-  // Dummy per sbloccare il build
-  return { success: true }
+// Se già hai altre export, aggiungi questa!
+export async function getTeamMembers() {
+  // Dummy implementation
+  return []
 }
