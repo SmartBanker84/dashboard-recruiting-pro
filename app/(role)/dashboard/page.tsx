@@ -6,6 +6,7 @@ import {
   LogOut, 
   Settings, 
   Bell, 
+  Users,
   User, 
   Crown, 
   UserCheck,
@@ -19,6 +20,10 @@ import { ManagerDashboard } from '../../../components/ManagerDashboard'
 import { RecruitingDashboard } from '../../../components/RecruitingDashboard'
 import { authHelpers } from '../../../lib/supabase'
 import type { UserRole, User as UserType } from '../../../types'
+
+// Optional: Widget rapidi (puoi modularizzare ulteriormente)
+import NotificationsWidget from '../../../components/NotificationsWidget'
+import TeamWidget from '../../../components/TeamWidget'
 
 export default function DashboardPage() {
   const params = useParams()
@@ -44,23 +49,16 @@ export default function DashboardPage() {
       setLoading(true)
       setError(null)
 
-      // Get current user
       const { user: authUser } = await authHelpers.getCurrentUser()
-      
       if (!authUser) {
-        // Redirect to home if not authenticated
         router.push('/')
         return
       }
 
-      // Get user profile
       const { data: profile, error: profileError } = await authHelpers.getUserProfile(authUser.id)
-      
       if (profileError || !profile) {
         throw new Error('Impossibile caricare il profilo utente')
       }
-
-      // Verify role matches
       if (profile.role !== role) {
         throw new Error('Ruolo non autorizzato per questo utente')
       }
@@ -69,8 +67,6 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Error loading user data:', err)
       setError(err instanceof Error ? err.message : 'Errore durante il caricamento')
-      
-      // Redirect to home after error
       setTimeout(() => {
         router.push('/')
       }, 3000)
@@ -114,19 +110,16 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading) {
-    return <LoadingScreen />
-  }
-
-  if (error) {
-    return <ErrorScreen error={error} onRetry={loadUserData} />
-  }
-
-  if (!user) {
-    return null
-  }
+  if (loading) return <LoadingScreen />
+  if (error) return <ErrorScreen error={error} onRetry={loadUserData} />
+  if (!user) return null
 
   const roleConfig = getRoleConfig()
+
+  // Navigazione rapida per settings/notifications/team
+  const handleNavigate = (section: 'settings' | 'notifications' | 'team') => {
+    router.push(`/${role}/${section}`)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -164,16 +157,33 @@ export default function DashboardPage() {
             </div>
 
             {/* Right side - User actions */}
-            <div className="flex items-center gap-3">
-              {/* Notifications (placeholder) */}
-              <button className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Notifications */}
+              <button
+                className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Notifiche"
+                onClick={() => handleNavigate('notifications')}
+              >
                 <Bell className="h-5 w-5" />
               </button>
-
-              {/* Settings (placeholder) */}
-              <button className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700">
+              {/* Settings */}
+              <button
+                className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Impostazioni"
+                onClick={() => handleNavigate('settings')}
+              >
                 <Settings className="h-5 w-5" />
               </button>
+              {/* Team (solo manager) */}
+              {role === 'manager' && (
+                <button
+                  className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                  aria-label="Team"
+                  onClick={() => handleNavigate('team')}
+                >
+                  <Users className="h-5 w-5" />
+                </button>
+              )}
 
               {/* User menu */}
               <div className="flex items-center gap-3">
@@ -185,12 +195,10 @@ export default function DashboardPage() {
                     {user.email}
                   </p>
                 </div>
-                
                 <div className="flex items-center gap-2">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-600">
                     <User className="h-5 w-5" />
                   </div>
-                  
                   <button
                     onClick={handleSignOut}
                     className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
@@ -226,10 +234,17 @@ export default function DashboardPage() {
           {role === 'manager' && (
             <ManagerDashboard userRole={role} userId={user.id} />
           )}
-          
           {role === 'recruiter' && (
             <RecruitingDashboard userRole={role} userId={user.id} />
           )}
+
+          {/* Widget aggiuntivi in dashboard */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Notifiche rapide (versione compatta) */}
+            <NotificationsWidget userId={user.id} />
+            {/* Widget team solo per manager */}
+            {role === 'manager' && <TeamWidget userId={user.id} />}
+          </div>
         </div>
       </main>
 
@@ -242,7 +257,6 @@ export default function DashboardPage() {
               <span>•</span>
               <span>Versione 1.0.0</span>
             </div>
-            
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <span>Built with ❤️ using Next.js</span>
             </div>
@@ -291,15 +305,10 @@ function ErrorScreen({ error, onRetry }: ErrorScreenProps) {
             <AlertCircle className="h-8 w-8" />
           </div>
         </div>
-        
         <h2 className="mb-4 text-xl font-semibold text-gray-900">
           Errore di Caricamento
         </h2>
-        
-        <p className="mb-6 text-gray-600">
-          {error}
-        </p>
-        
+        <p className="mb-6 text-gray-600">{error}</p>
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             onClick={onRetry}
@@ -308,7 +317,6 @@ function ErrorScreen({ error, onRetry }: ErrorScreenProps) {
             <Loader2 className="h-4 w-4" />
             Riprova
           </button>
-          
           <button
             onClick={() => router.push('/')}
             className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
