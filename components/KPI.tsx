@@ -5,6 +5,40 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { clsx } from 'clsx'
 import type { KPICardProps } from '../types'
 
+type KPIColor = 'primary' | 'success' | 'warning' | 'danger'
+
+const colorMap: Record<KPIColor, {
+  bg: string
+  border: string
+  icon: string
+  iconBg: string
+}> = {
+  primary: {
+    bg: 'bg-primary-50',
+    border: 'border-primary-100',
+    icon: 'text-primary-600',
+    iconBg: 'bg-primary-100'
+  },
+  success: {
+    bg: 'bg-success-50',
+    border: 'border-success-100',
+    icon: 'text-success-600',
+    iconBg: 'bg-success-100'
+  },
+  warning: {
+    bg: 'bg-warning-50',
+    border: 'border-warning-100',
+    icon: 'text-warning-600',
+    iconBg: 'bg-warning-100'
+  },
+  danger: {
+    bg: 'bg-danger-50',
+    border: 'border-danger-100',
+    icon: 'text-danger-600',
+    iconBg: 'bg-danger-100'
+  }
+}
+
 // KPI Card Component
 export function KPICard({ 
   title, 
@@ -15,11 +49,9 @@ export function KPICard({
 }: KPICardProps) {
   const formatValue = (val: string | number): string => {
     if (typeof val === 'number') {
-      // If it's a percentage, format accordingly
       if (title.toLowerCase().includes('tasso') || title.toLowerCase().includes('rate')) {
         return `${val.toFixed(1)}%`
       }
-      // If it's a large number, format with thousands separator
       return val.toLocaleString('it-IT')
     }
     return String(val)
@@ -36,33 +68,11 @@ export function KPICard({
   }
 
   const getCardColors = () => {
-    const colorMap = {
-      primary: {
-        bg: 'bg-primary-50',
-        border: 'border-primary-100',
-        icon: 'text-primary-600',
-        iconBg: 'bg-primary-100'
-      },
-      success: {
-        bg: 'bg-success-50',
-        border: 'border-success-100',
-        icon: 'text-success-600',
-        iconBg: 'bg-success-100'
-      },
-      warning: {
-        bg: 'bg-warning-50',
-        border: 'border-warning-100',
-        icon: 'text-warning-600',
-        iconBg: 'bg-warning-100'
-      },
-      danger: {
-        bg: 'bg-danger-50',
-        border: 'border-danger-100',
-        icon: 'text-danger-600',
-        iconBg: 'bg-danger-100'
-      }
-    }
-    return colorMap[color]
+    const fallback: KPIColor = 'primary'
+    const key = ['primary', 'success', 'warning', 'danger'].includes(color)
+      ? color as KPIColor
+      : fallback
+    return colorMap[key]
   }
 
   const colors = getCardColors()
@@ -72,13 +82,11 @@ export function KPICard({
       'relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 hover:shadow-soft-lg',
       'bg-white', colors.border, 'group hover:scale-[1.02]'
     )}>
-      {/* Background Pattern */}
       <div className={clsx(
         'absolute -right-4 -top-4 h-24 w-24 rounded-full opacity-5 transition-opacity group-hover:opacity-10',
         colors.iconBg
       )} />
       
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-secondary-600 mb-1">
@@ -88,8 +96,6 @@ export function KPICard({
             {formatValue(value)}
           </p>
         </div>
-        
-        {/* Icon */}
         <div className={clsx(
           'flex h-12 w-12 items-center justify-center rounded-xl',
           colors.iconBg, colors.icon
@@ -98,7 +104,6 @@ export function KPICard({
         </div>
       </div>
 
-      {/* Trend */}
       {change !== undefined && (
         <div className="flex items-center gap-2">
           <div className={clsx('flex items-center gap-1', getTrendColor())}>
@@ -113,7 +118,6 @@ export function KPICard({
         </div>
       )}
 
-      {/* Animated bottom border */}
       <div className={clsx(
         'absolute bottom-0 left-0 h-1 w-0 transition-all duration-500 group-hover:w-full',
         color === 'primary' && 'bg-primary-500',
@@ -209,7 +213,6 @@ export function AnimatedNumber({
       const elapsed = currentTime - startTime
       const progress = Math.min(elapsed / duration, 1)
       
-      // Easing function for smooth animation
       const easeOutQuart = 1 - Math.pow(1 - progress, 4)
       const currentValue = startValue + (value - startValue) * easeOutQuart
       
@@ -231,18 +234,18 @@ interface CompactKPICardProps {
   title: string
   value: string | number
   icon: React.ReactNode
-  color?: 'primary' | 'success' | 'warning' | 'danger'
+  color?: KPIColor
 }
 
 export function CompactKPICard({ title, value, icon, color = 'primary' }: CompactKPICardProps) {
   const getColors = () => {
-    const colorMap = {
+    const colorMapCompact: Record<KPIColor, string> = {
       primary: 'text-primary-600 bg-primary-100',
       success: 'text-success-600 bg-success-100',
       warning: 'text-warning-600 bg-warning-100',
       danger: 'text-danger-600 bg-danger-100'
     }
-    return colorMap[color]
+    return colorMapCompact[color]
   }
 
   return (
