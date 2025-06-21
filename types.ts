@@ -31,6 +31,7 @@ export interface Candidate {
   recruiter_id: string
   created_at: string
   updated_at: string
+  salary_expectation?: number // aggiunto per compatibilità con il dashboard manager
 }
 
 // Form types
@@ -64,24 +65,20 @@ export interface MonthlyData {
   interviews: number
 }
 
-export interface ChartData {
-  month: string
-  candidates: number
-  hired: number
-  interviews: number
-}
-
 // Filter types
 export interface CandidateFilters {
   status?: CandidateStatus[]
   experience?: ExperienceLevel[]
-  recruiter?: string
+  recruiter?: string[]
   search?: string
   dateRange?: {
-    start: string
-    end: string
+    start: Date
+    end: Date
   }
 }
+
+// Alias per i filtri, se vuoi mantenere il vecchio nome FilterOptions (opzionale)
+export type FilterOptions = CandidateFilters
 
 // Search and sort types
 export interface SortConfig<T> {
