@@ -181,14 +181,16 @@ export interface ExperienceConfig {
   yearsRange: string
 }
 
-// KPI Component types - QUESTA È LA RIGA IMPORTANTE DA CAMBIARE
+// KPI Component types (INTEGRAZIONE QUI)
+export type KPIColor = 'primary' | 'success' | 'warning' | 'danger'
+
 export interface KPICardProps {
   title: string
   value: string | number
   change?: number
   changeLabel?: string
   icon: React.ReactNode
-  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'gray' | 'primary'
+  color?: KPIColor
   loading?: boolean
 }
 
