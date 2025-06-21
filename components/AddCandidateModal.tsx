@@ -23,6 +23,7 @@ interface AddCandidateModalProps {
   onClose: () => void
   onSuccess: (candidate: Candidate) => void
   userId: string
+  candidate?: Candidate
 }
 
 interface AddCandidateForm {
@@ -58,7 +59,7 @@ const EXPERIENCE_LEVELS: { value: ExperienceLevel; label: string }[] = [
   { value: 'lead', label: 'Lead/Manager' }
 ]
 
-export function AddCandidateModal({ isOpen, onClose, onSuccess, userId }: AddCandidateModalProps) {
+export function AddCandidateModal({ isOpen, onClose, onSuccess, userId, candidate }: AddCandidateModalProps) {
   const [formData, setFormData] = React.useState<AddCandidateForm>({
     full_name: '',
     email: '',
@@ -78,24 +79,24 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId }: AddCan
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
-  // Reset form when modal opens/closes
+  // Popola i dati se candidate è presente (edit), altrimenti svuota il form (add)
   React.useEffect(() => {
     if (isOpen) {
       setFormData({
-        full_name: '',
-        email: '',
-        phone: '',
-        position: '',
-        experience_level: 'junior',
-        location: '',
-        notes: '',
-        cv_url: '',
-        skills: []
+        full_name: candidate?.full_name || '',
+        email: candidate?.email || '',
+        phone: candidate?.phone || '',
+        position: candidate?.position || '',
+        experience_level: candidate?.experience_level || 'junior',
+        location: candidate?.location || '',
+        notes: candidate?.notes || '',
+        cv_url: candidate?.cv_url || '',
+        skills: candidate?.skills || []
       })
       setErrors({})
       setSkillInput('')
     }
-  }, [isOpen])
+  }, [isOpen, candidate])
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
@@ -149,7 +150,6 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId }: AddCan
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setDragActive(false)
-    
     const file = e.dataTransfer.files[0]
     if (file) {
       handleFileSelect(file)
@@ -193,30 +193,25 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId }: AddCan
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
     if (!validateForm()) {
       return
     }
-
     setLoading(true)
     setErrors({})
-
     try {
       let cvUrl = formData.cv_url
 
       // Upload CV if file is provided
       if (formData.cv_file) {
-        const tempCandidateId = `temp-${Date.now()}`
+        const tempCandidateId = candidate?.id || `temp-${Date.now()}`
         const { url, error: uploadError } = await storageHelpers.uploadCV(formData.cv_file, tempCandidateId)
-        
         if (uploadError) {
           throw new Error('Errore durante l\'upload del CV')
         }
-        
         cvUrl = url || ''
       }
 
-      // Create candidate
+      // Crea o aggiorna candidato
       const candidateData = {
         full_name: formData.full_name.trim(),
         email: formData.email.trim(),
@@ -227,24 +222,32 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId }: AddCan
         notes: formData.notes.trim(),
         cv_url: cvUrl,
         skills: formData.skills,
-        status: 'new' as const,
+        status: candidate?.status ?? 'new',
         recruiter_id: userId
       }
 
-      const { data: candidate, error } = await dbHelpers.addCandidate(candidateData)
+      let result
+      if (candidate?.id) {
+        // Modal in modalità modifica: aggiorna candidato
+        result = await dbHelpers.updateCandidate(candidate.id, candidateData)
+      } else {
+        // Modal in modalità aggiunta: crea nuovo candidato
+        result = await dbHelpers.addCandidate(candidateData)
+      }
+
+      const { data: savedCandidate, error } = result
 
       if (error) {
         throw new Error(error.message)
       }
-
-      if (candidate) {
-        onSuccess(candidate)
+      if (savedCandidate) {
+        onSuccess(savedCandidate)
         onClose()
       }
     } catch (error) {
-      console.error('Error adding candidate:', error)
+      console.error('Error adding/updating candidate:', error)
       setErrors({
-        general: error instanceof Error ? error.message : 'Errore durante l\'aggiunta del candidato'
+        general: error instanceof Error ? error.message : 'Errore durante il salvataggio del candidato'
       })
     } finally {
       setLoading(false)
@@ -260,7 +263,7 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId }: AddCan
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Aggiungi Nuovo Candidato
+              {candidate ? 'Modifica Candidato' : 'Aggiungi Nuovo Candidato'}
             </h2>
             <p className="text-sm text-gray-600">
               Compila le informazioni del candidato
@@ -540,10 +543,10 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId }: AddCan
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Aggiunta in corso...
+                  {candidate ? 'Salvataggio...' : 'Aggiunta in corso...'}
                 </div>
               ) : (
-                'Aggiungi Candidato'
+                candidate ? 'Salva Modifiche' : 'Aggiungi Candidato'
               )}
             </button>
           </div>
@@ -552,3 +555,5 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId }: AddCan
     </div>
   )
 }
+
+export default AddCandidateModal
