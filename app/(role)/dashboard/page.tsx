@@ -17,7 +17,7 @@ import {
 import { clsx } from 'clsx'
 
 import { ManagerDashboard } from '../../../components/ManagerDashboard'
-import { RecruitingDashboard } from '../../../components/RecruitingDashboard'
+import RecruitingDashboard from '../../../components/RecruitingDashboard'
 import { authHelpers } from '../../../lib/supabase'
 import type { UserRole, User as UserType } from '../../../types'
 
@@ -232,10 +232,10 @@ export default function DashboardPage() {
         {/* Dashboard Content */}
         <div className="animate-fade-in">
           {role === 'manager' && (
-            <ManagerDashboard userRole={role} userId={user.id} />
+            <ManagerDashboard userId={user.id} role={role} />
           )}
           {role === 'recruiter' && (
-            <RecruitingDashboard userRole={role} userId={user.id} />
+            <RecruitingDashboard userId={user.id} role={role} />
           )}
 
           {/* Widget aggiuntivi in dashboard */}
