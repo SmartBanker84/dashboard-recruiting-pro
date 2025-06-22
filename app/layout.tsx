@@ -74,24 +74,12 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0ea5e9" />
         <meta name="msapplication-TileColor" content="#0ea5e9" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="//supabase.co" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var mode = localStorage.getItem('theme') || 'light';
-                  if (mode === 'dark') {
-                    document.documentElement.classList.add('dark');
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
+        <link rel="preconnect" href="https://xyz.supabase.co" />
+        <link rel="dns-prefetch" href="//xyz.supabase.co" />
+        <script src="/scripts/theme.js" />
         {/* <script defer src="/_vercel/insights/script.js"></script> */}
       </head>
       <body 
@@ -138,28 +126,7 @@ export default function RootLayout({
           />
         </AppProvider>
         {/* ...tutte le style tag e script rimangono come nel tuo file... */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('SW registered: ', registration);
-                    })
-                    .catch(function(registrationError) {
-                      console.log('SW registration failed: ', registrationError);
-                    });
-                });
-              }
-            `,
-          }}
-        />
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            /* ...tutte le tue global style... */
-          `
-        }} />
+        <script src="/scripts/sw-register.js" />
       </body>
     </html>
   )
