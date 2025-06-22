@@ -80,9 +80,10 @@ export type ChartData = {
 // Filter types
 export interface CandidateFilters {
   status?: CandidateStatus[]
-  experience?: ExperienceLevel[]
+  experienceLevel?: ExperienceLevel[]
   recruiter?: string[]
   search?: string
+  position?: string[]
   dateRange?: {
     start: Date
     end: Date
@@ -291,6 +292,14 @@ export interface ButtonProps {
   onClick?: () => void
   type?: 'button' | 'submit' | 'reset'
   className?: string
+}
+
+// Export configuration types
+export interface ExportOptions {
+  format?: 'xlsx' | 'csv'
+  filename?: string
+  includeColumns?: string[]
+  filters?: FilterOptions
 }
 
 // Export default type for convenience
