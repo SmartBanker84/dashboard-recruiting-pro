@@ -38,9 +38,10 @@ import type {
 interface ManagerDashboardProps {
   userId: string;
   role: 'manager';
+  onLogout: () => Promise<void>;
 }
 
-export function ManagerDashboard({ userId, role }: ManagerDashboardProps) {
+export function ManagerDashboard({ userId, role, onLogout }: ManagerDashboardProps) {
   // State management
   const [candidates, setCandidates] = React.useState<Candidate[]>([])
   const [kpiData, setKpiData] = React.useState<KPIData | null>(null)
@@ -213,6 +214,15 @@ export function ManagerDashboard({ userId, role }: ManagerDashboardProps) {
 
   return (
     <div className="space-y-6">
+      {/* Logout Button */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={onLogout}
+          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition"
+        >
+          Logout
+        </button>
+      </div>
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
