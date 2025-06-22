@@ -26,29 +26,11 @@ export default function HomePage() {
   const [loading, setLoading] = React.useState<UserRole | null>(null)
   const [error, setError] = React.useState<string | null>(null)
 
+  // DEBUG: bypass login, redirect immediato per verifica pulsanti
   const handleRoleSelection = async (role: UserRole) => {
-    try {
-      console.log('Clicked role:', role)
-      setLoading(role)
-      setError(null)
-
-      const { user, error: authError } = await authHelpers.signInAnonymously(role)
-      console.log('LOGIN:', { user, authError })
-
-      if (authError) {
-        throw new Error(authError.message)
-      }
-
-      if (user) {
-        localStorage.setItem('userRole', role)
-        router.push(`/${role}/dashboard`)
-      }
-    } catch (err) {
-      console.error('Login error:', err)
-      setError(err instanceof Error ? err.message : 'Errore durante il login')
-    } finally {
-      setLoading(null)
-    }
+    console.log('Simulazione accesso con ruolo:', role)
+    localStorage.setItem('userRole', role)
+    router.push(`/${role}/dashboard`)
   }
 
   return (
