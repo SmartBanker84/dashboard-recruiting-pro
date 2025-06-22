@@ -17,6 +17,7 @@ export const authHelpers = {
   // Simple login/signup (for demo purposes)
   async signInAnonymously(userRole: UserRole) {
     const { data, error } = await supabase.auth.signInAnonymously()
+    console.log('LOGIN:', data)
     
     if (error) return { user: null, error }
     
