@@ -26,7 +26,8 @@ const STATUS_TRANSLATIONS = {
   interview: 'Colloquio',
   offer: 'Offerta',
   hired: 'Assunto',
-  rejected: 'Scartato'
+  rejected: 'Scartato',
+  review: 'In revisione'  // aggiunto stato mancante
 }
 
 // Experience level translations
@@ -45,7 +46,7 @@ function formatCandidateForExport(candidate: Candidate): Record<string, any> {
     [COLUMN_MAPPINGS.phone]: candidate.phone || '-',
     [COLUMN_MAPPINGS.position]: candidate.position,
     [COLUMN_MAPPINGS.experience_level]: EXPERIENCE_TRANSLATIONS[candidate.experience_level],
-    [COLUMN_MAPPINGS.status]: STATUS_TRANSLATIONS[candidate.status],
+    [COLUMN_MAPPINGS.status]: STATUS_TRANSLATIONS[candidate.status] ?? candidate.status,
     [COLUMN_MAPPINGS.location]: candidate.location || '-',
     [COLUMN_MAPPINGS.salary_expectation]: candidate.salary_expectation 
       ? `€${candidate.salary_expectation.toLocaleString('it-IT')}` 
@@ -88,7 +89,7 @@ function applyFilters(candidates: Candidate[], filters?: FilterOptions): Candida
   if (filters.dateRange) {
     filteredCandidates = filteredCandidates.filter(candidate => {
       const candidateDate = new Date(candidate.created_at)
-      return candidateDate >= filters.dateRange!.from && candidateDate <= filters.dateRange!.to
+      return candidateDate >= filters.dateRange!.start && candidateDate <= filters.dateRange!.end
     })
   }
 
