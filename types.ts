@@ -65,6 +65,18 @@ export interface MonthlyData {
   interviews: number
 }
 
+// ChartData type for chart libraries (es. Chart.js, Recharts, ecc.)
+export type ChartData = {
+  labels: string[]
+  datasets: {
+    label: string
+    data: number[]
+    backgroundColor?: string
+    borderColor?: string
+    [key: string]: any
+  }[]
+}
+
 // Filter types
 export interface CandidateFilters {
   status?: CandidateStatus[]
