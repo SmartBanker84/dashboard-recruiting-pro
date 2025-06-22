@@ -35,7 +35,12 @@ import type {
   CandidateFilters
 } from '../types'
 
-export function ManagerDashboard({ userRole, userId }: DashboardProps) {
+interface ManagerDashboardProps {
+  userId: string;
+  role: 'manager';
+}
+
+export function ManagerDashboard({ userId, role }: ManagerDashboardProps) {
   // State management
   const [candidates, setCandidates] = React.useState<Candidate[]>([])
   const [kpiData, setKpiData] = React.useState<KPIData | null>(null)
@@ -65,14 +70,14 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
       
       // Load candidates with filters
       const candidateFilters: CandidateFilters = {
-        recruiter: selectedRecruiter === 'all' ? undefined : [selectedRecruiter],
+        recruiter_id: selectedRecruiter === 'all' ? undefined : [selectedRecruiter],
         dateRange: selectedDateRange
       }
       
       const [candidatesResult, kpiResult, monthlyResult] = await Promise.all([
         dbHelpers.getCandidates(candidateFilters),
-        dbHelpers.getKPIData(candidateFilters.recruiter?.[0]),
-        dbHelpers.getMonthlyData(candidateFilters.recruiter?.[0])
+        dbHelpers.getKPIData(candidateFilters.recruiter_id?.[0]),
+        dbHelpers.getMonthlyData(candidateFilters.recruiter_id?.[0])
       ])
 
       if (candidatesResult.data) {
@@ -111,7 +116,7 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
     try {
       const filters: CandidateFilters = {
         dateRange: selectedDateRange,
-        recruiter: selectedRecruiter === 'all' ? undefined : [selectedRecruiter]
+        recruiter_id: selectedRecruiter === 'all' ? undefined : [selectedRecruiter]
       }
       
       await exportCandidatesToExcel(candidates, {
@@ -165,12 +170,12 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
 
     const totalCandidates = candidates.length
     const thisMonth = candidates.filter(c => 
-      new Date(c.created_at) >= selectedDateRange.start &&
-      new Date(c.created_at) <= selectedDateRange.end
+      (c.created_at ? new Date(c.created_at) : new Date()) >= selectedDateRange.start &&
+      (c.created_at ? new Date(c.created_at) : new Date()) <= selectedDateRange.end
     ).length
 
     const previousMonth = candidates.filter(c => {
-      const date = new Date(c.created_at)
+      const date = c.created_at ? new Date(c.created_at) : new Date()
       const prevStart = subDays(selectedDateRange.start, 30)
       const prevEnd = subDays(selectedDateRange.end, 30)
       return date >= prevStart && date <= prevEnd
@@ -187,7 +192,9 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
 
     const topPositions = candidates
       .reduce((acc, candidate) => {
-        acc[candidate.position] = (acc[candidate.position] || 0) + 1
+        if (candidate.position) {
+          acc[candidate.position] = (acc[candidate.position] || 0) + 1
+        }
         return acc
       }, {} as Record<string, number>)
 
