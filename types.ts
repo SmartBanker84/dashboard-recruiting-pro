@@ -1,306 +1,265 @@
-import React from 'react'
+import React, { ReactNode } from 'react';
 
-// User types
-export type UserRole = 'manager' | 'recruiter'
+// Stati possibili per un candidato
+export type CandidateStatus =
+  | 'new'
+  | 'screening'
+  | 'interview'
+  | 'offer'
+  | 'hired'
+  | 'rejected'
+  | 'review';
 
+// Traduzioni per gli stati del candidato (per UI)
+export const STATUS_TRANSLATIONS: Record<CandidateStatus, string> = {
+  new: 'Nuovo',
+  screening: 'Screening',
+  interview: 'Colloquio',
+  offer: 'Offerta',
+  hired: 'Assunto',
+  rejected: 'Scartato',
+  review: 'In revisione'
+};
+
+// Livelli di esperienza possibili
+export type ExperienceLevel = 'junior' | 'mid' | 'senior' | 'lead';
+
+// Traduzioni per i livelli di esperienza
+export const EXPERIENCE_TRANSLATIONS: Record<ExperienceLevel, string> = {
+  junior: 'Junior',
+  mid: 'Mid-level',
+  senior: 'Senior',
+  lead: 'Lead/Manager'
+};
+
+// Ruoli utente all’interno del sistema
+export type UserRole = 'admin' | 'manager' | 'recruiter' | 'guest';
+
+// Interfaccia utente
 export interface User {
-  id: string
-  email: string
-  full_name: string
-  role: UserRole
-  created_at: string
-  updated_at: string
+  id: string;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  created_at: string;
+  updated_at: string;
 }
 
-// Candidate types
-export type CandidateStatus = 'new' | 'review' | 'interview' | 'offer' | 'hired' | 'rejected'
-export type ExperienceLevel = 'junior' | 'mid' | 'senior' | 'lead'
-
+// Interfaccia candidato con campi principali
 export interface Candidate {
-  id: string
-  full_name: string
-  email: string
-  phone: string
-  position: string
-  experience_level: ExperienceLevel
-  location: string
-  status: CandidateStatus
-  notes: string
-  cv_url: string
-  skills: string[]
-  recruiter_id: string
-  created_at: string
-  updated_at: string
-  salary_expectation?: number // aggiunto per compatibilità con il dashboard manager
+  id: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  position?: string;
+  experience_level: ExperienceLevel;
+  status: CandidateStatus;
+  location?: string;
+  salary_expectation?: number;
+  skills?: string[];
+  notes?: string;
+  created_at?: string | Date;
+  updated_at?: string | Date;
+  recruiter_id?: string;
+  cv_url?: string;
+  name?: string;
+  priorityLevel?: 'High' | 'Medium' | 'Low';
 }
 
-// Form types
-export interface AddCandidateForm {
-  full_name: string
-  email: string
-  phone: string
-  position: string
-  experience_level: ExperienceLevel
-  location: string
-  notes: string
-  cv_url: string
-  skills: string[]
-  cv_file?: File
+// Opzioni filtro per ricerca candidati
+export interface CandidateFilters {
+  status?: CandidateStatus[];
+  experienceLevel?: ExperienceLevel[];
+  position?: string[];
+  recruiter_id?: string[];
+  dateRange?: { start: Date; end: Date };
+  search?: string;
+}
+
+// Alias per i filtri, mantenuto FilterOptions
+export type FilterOptions = CandidateFilters;
+
+// Opzioni per esportazione dati
+export interface ExportOptions {
+  format?: 'xlsx' | 'csv';
+  filename?: string;
+  includeColumns?: string[];
+  filters?: FilterOptions;
 }
 
 // KPI types
 export interface KPIData {
-  totalCandidates: number
-  newCandidates: number
-  activeInterviews: number
-  hired: number
-  conversionRate: number
+  totalCandidates: number;
+  newCandidates: number;
+  activeInterviews: number;
+  hired: number;
+  conversionRate: number;
 }
 
-// Monthly data type for charts/dashboard
+// Dati mensili per grafici/dashboard
 export interface MonthlyData {
-  month: string
-  candidates: number
-  hired: number
-  interviews: number
+  month: string;
+  candidates: number;
+  hired: number;
+  interviews: number;
 }
 
-// ChartData type for chart libraries (es. Chart.js, Recharts, ecc.)
-export type ChartData = {
-  labels: string[]
-  datasets: {
-    label: string
-    data: number[]
-    backgroundColor?: string
-    borderColor?: string
-    [key: string]: any
-  }[]
+// Props per dashboard principale (generica)
+export interface DashboardProps {
+  candidates: Candidate[];
+  kpiData: KPIData[];
+  monthlyData: MonthlyData[];
+  filterOptions: FilterOptions;
+  onFilterChange: (filters: FilterOptions) => void;
+  onExport: (options: ExportOptions) => void;
 }
 
-// Filter types
-export interface CandidateFilters {
-  status?: CandidateStatus[]
-  experienceLevel?: ExperienceLevel[]
-  recruiter?: string[]
-  search?: string
-  position?: string[]
-  dateRange?: {
-    start: Date
-    end: Date
-  }
+// Props specifiche per RecruitingDashboard
+// Estende DashboardProps aggiungendo informazioni sull'utente
+export interface RecruitingDashboardProps extends DashboardProps {
+  userRole: UserRole;
+  userId: string;
 }
 
-// Alias per i filtri, se vuoi mantenere il vecchio nome FilterOptions (opzionale)
-export type FilterOptions = CandidateFilters
-
-// Search and sort types
-export interface SortConfig<T> {
-  key: keyof T
-  direction: 'asc' | 'desc'
+// Props per componente UrgentCandidateCard
+export interface UrgentCandidateCardProps {
+  candidate: Candidate & { name: string; priorityLevel: 'High' | 'Medium' | 'Low' };
+  onViewDetails: (candidateId: string) => void;
 }
 
-export interface SearchConfig {
-  query: string
-  fields: string[]
-  caseSensitive: boolean
+// Props per componente KPI Card
+export type KPIColor = 'primary' | 'success' | 'warning' | 'danger';
+
+export interface KPICardProps {
+  title: string;
+  value: string | number;
+  change?: number;
+  changeLabel?: string;
+  icon?: ReactNode;
+  color?: KPIColor;
+  loading?: boolean;
 }
 
-// API Response types
+export interface CompactKPICardProps {
+  title: string;
+  value: string | number;
+  icon?: ReactNode;
+  color?: KPIColor;
+  loading?: boolean;
+  size?: 'sm' | 'xs';
+}
+
+export interface KPIGridProps {
+  data: KPIData;
+  loading?: boolean;
+}
+
+// Tipi per componenti chart
+export interface LineChartProps {
+  data: MonthlyData[];
+  height?: number;
+  showGrid?: boolean;
+  showLegend?: boolean;
+}
+
+export interface BarChartProps {
+  data: MonthlyData[];
+  height?: number;
+  showGrid?: boolean;
+  showLegend?: boolean;
+}
+
+export interface PieChartProps {
+  data: Array<{ name: string; value: number; color?: string }>;
+  height?: number;
+  showLegend?: boolean;
+}
+
+// Tipi per tabelle
+export interface TableColumn<T> {
+  key: keyof T;
+  label: string;
+  sortable?: boolean;
+  render?: (value: any, row: T) => ReactNode;
+  width?: string;
+}
+
+export interface TableProps<T> {
+  data: T[];
+  columns: TableColumn<T>[];
+  loading?: boolean;
+  sortConfig?: { key: keyof T; direction: 'asc' | 'desc' };
+  onSort?: (key: keyof T) => void;
+  onRowClick?: (row: T) => void;
+}
+
+// Tipi per form
+export interface FormFieldProps {
+  label: string;
+  name: string;
+  type?: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'file';
+  placeholder?: string;
+  required?: boolean;
+  options?: Array<{ value: string; label: string }>;
+  error?: string;
+  value?: any;
+  onChange?: (value: any) => void;
+}
+
+// Tipi per bottoni
+export interface ButtonProps {
+  children: ReactNode;
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
+  className?: string;
+}
+
+// Tipi per risposte API
 export interface ApiResponse<T> {
-  data: T | null
-  error: string | null
-  message?: string
+  data: T | null;
+  error: string | null;
+  message?: string;
 }
 
 export interface PaginatedResponse<T> {
-  data: T[]
-  count: number
-  page: number
-  totalPages: number
-  hasMore: boolean
+  data: T[];
+  count: number;
+  page: number;
+  totalPages: number;
+  hasMore: boolean;
 }
 
-// Database types (Supabase)
+// Tipi database Supabase
 export interface Database {
   public: {
     Tables: {
       users: {
-        Row: User
-        Insert: Omit<User, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<User, 'id' | 'created_at' | 'updated_at'>>
-      }
+        Row: User;
+        Insert: Omit<User, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<User, 'id' | 'created_at' | 'updated_at'>>;
+      };
       candidates: {
-        Row: Candidate
-        Insert: Omit<Candidate, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Candidate, 'id' | 'created_at' | 'updated_at'>>
-      }
-    }
+        Row: Candidate;
+        Insert: Omit<Candidate, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Candidate, 'id' | 'created_at' | 'updated_at'>>;
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      user_role: UserRole
-      candidate_status: CandidateStatus
-      experience_level: ExperienceLevel
-    }
-  }
+      user_role: UserRole;
+      candidate_status: CandidateStatus;
+      experience_level: ExperienceLevel;
+    };
+  };
 }
 
-// Component props types
-export interface DashboardProps {
-  userRole: UserRole
-  userId: string
-}
-
-export interface CandidateCardProps {
-  candidate: Candidate
-  onUpdate?: (candidate: Candidate) => void
-  onDelete?: (candidateId: string) => void
-  compact?: boolean
-}
-
-export interface ModalProps {
-  isOpen: boolean
-  onClose: () => void
-}
-
-// Chart configuration types
-export interface ChartConfig {
-  responsive: boolean
-  plugins: {
-    legend: {
-      position: 'top' | 'bottom' | 'left' | 'right'
-    }
-    title: {
-      display: boolean
-      text: string
-    }
-  }
-}
-
-// Status configuration
-export interface StatusConfig {
-  value: CandidateStatus
-  label: string
-  color: string
-  bgColor: string
-  textColor: string
-  icon?: string
-}
-
-// Experience configuration
-export interface ExperienceConfig {
-  value: ExperienceLevel
-  label: string
-  description: string
-  yearsRange: string
-}
-
-// KPI Component types
-export type KPIColor = 'primary' | 'success' | 'warning' | 'danger'
-
-export interface KPICardProps {
-  title: string
-  value: string | number
-  change?: number
-  changeLabel?: string
-  icon: React.ReactNode
-  color?: KPIColor
-  loading?: boolean
-}
-
-export interface CompactKPICardProps {
-  title: string
-  value: string | number
-  icon?: React.ReactNode
-  color?: KPIColor
-  loading?: boolean
-  size?: 'sm' | 'xs'
-}
-
-export interface KPIGridProps {
-  data: KPIData
-  loading?: boolean
-}
-
-// Chart component types
-export interface LineChartProps {
-  data: MonthlyData[]
-  height?: number
-  showGrid?: boolean
-  showLegend?: boolean
-}
-
-export interface BarChartProps {
-  data: MonthlyData[]
-  height?: number
-  showGrid?: boolean
-  showLegend?: boolean
-}
-
-export interface PieChartProps {
-  data: Array<{
-    name: string
-    value: number
-    color?: string
-  }>
-  height?: number
-  showLegend?: boolean
-}
-
-// Table component types
-export interface TableColumn<T> {
-  key: keyof T
-  label: string
-  sortable?: boolean
-  render?: (value: any, row: T) => React.ReactNode
-  width?: string
-}
-
-export interface TableProps<T> {
-  data: T[]
-  columns: TableColumn<T>[]
-  loading?: boolean
-  sortConfig?: SortConfig<T>
-  onSort?: (key: keyof T) => void
-  onRowClick?: (row: T) => void
-}
-
-// Form component types
-export interface FormFieldProps {
-  label: string
-  name: string
-  type?: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'file'
-  placeholder?: string
-  required?: boolean
-  options?: Array<{ value: string; label: string }>
-  error?: string
-  value?: any
-  onChange?: (value: any) => void
-}
-
-// Button component types
-export interface ButtonProps {
-  children: React.ReactNode
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
-  loading?: boolean
-  disabled?: boolean
-  onClick?: () => void
-  type?: 'button' | 'submit' | 'reset'
-  className?: string
-}
-
-// Export configuration types
-export interface ExportOptions {
-  format?: 'xlsx' | 'csv'
-  filename?: string
-  includeColumns?: string[]
-  filters?: FilterOptions
-}
-
-// Export default type for convenience
-export type { Database as default }
+export default Database;
