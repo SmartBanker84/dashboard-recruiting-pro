@@ -119,6 +119,13 @@ export interface DashboardProps {
 export interface RecruitingDashboardProps extends DashboardProps {
   userRole: UserRole;
   userId: string;
+  onLogout: () => Promise<void>;
+}
+
+export interface ManagerDashboardProps {
+  userId: string;
+  role: 'manager';
+  onLogout: () => Promise<void>;
 }
 
 // Props per componente UrgentCandidateCard
