@@ -1,7 +1,7 @@
-import * as XLSX from 'xlsx'
-import { format } from 'date-fns'
-import { it } from 'date-fns/locale'
-import type { Candidate, ExportOptions, FilterOptions } from '../types'
+import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
+import type { Candidate, ExportOptions, FilterOptions, CandidateStatus, ExperienceLevel } from '../types';
 
 // Column mappings for Excel export
 const COLUMN_MAPPINGS = {
@@ -20,7 +20,7 @@ const COLUMN_MAPPINGS = {
 }
 
 // Status translations
-const STATUS_TRANSLATIONS = {
+const STATUS_TRANSLATIONS: Record<CandidateStatus, string> = {
   new: 'Nuovo',
   screening: 'Screening',
   interview: 'Colloquio',
@@ -31,7 +31,7 @@ const STATUS_TRANSLATIONS = {
 }
 
 // Experience level translations
-const EXPERIENCE_TRANSLATIONS = {
+const EXPERIENCE_TRANSLATIONS: Record<ExperienceLevel, string> = {
   junior: 'Junior',
   mid: 'Mid-level',
   senior: 'Senior',
@@ -44,17 +44,19 @@ function formatCandidateForExport(candidate: Candidate): Record<string, any> {
     [COLUMN_MAPPINGS.full_name]: candidate.full_name,
     [COLUMN_MAPPINGS.email]: candidate.email,
     [COLUMN_MAPPINGS.phone]: candidate.phone || '-',
-    [COLUMN_MAPPINGS.position]: candidate.position,
-    [COLUMN_MAPPINGS.experience_level]: EXPERIENCE_TRANSLATIONS[candidate.experience_level],
-    [COLUMN_MAPPINGS.status]: STATUS_TRANSLATIONS[candidate.status] ?? candidate.status,
+    [COLUMN_MAPPINGS.position]: candidate.position || '-',
+    [COLUMN_MAPPINGS.experience_level]: EXPERIENCE_TRANSLATIONS[candidate.experience_level as ExperienceLevel] ?? '-',
+    [COLUMN_MAPPINGS.status]: STATUS_TRANSLATIONS[candidate.status as CandidateStatus] ?? candidate.status,
     [COLUMN_MAPPINGS.location]: candidate.location || '-',
     [COLUMN_MAPPINGS.salary_expectation]: candidate.salary_expectation 
       ? `€${candidate.salary_expectation.toLocaleString('it-IT')}` 
       : '-',
-    [COLUMN_MAPPINGS.skills]: candidate.skills.join(', '),
+    [COLUMN_MAPPINGS.skills]: Array.isArray(candidate.skills) && candidate.skills.length > 0
+      ? candidate.skills.join(', ')
+      : '-',
     [COLUMN_MAPPINGS.notes]: candidate.notes || '-',
-    [COLUMN_MAPPINGS.created_at]: format(new Date(candidate.created_at), 'dd/MM/yyyy', { locale: it }),
-    [COLUMN_MAPPINGS.updated_at]: format(new Date(candidate.updated_at), 'dd/MM/yyyy', { locale: it })
+    [COLUMN_MAPPINGS.created_at]: candidate.created_at ? format(new Date(candidate.created_at as string), 'dd/MM/yyyy') : '-',
+    [COLUMN_MAPPINGS.updated_at]: candidate.updated_at ? format(new Date(candidate.updated_at as string), 'dd/MM/yyyy') : '-'
   }
 }
 
@@ -80,15 +82,19 @@ function applyFilters(candidates: Candidate[], filters?: FilterOptions): Candida
 
   // Filter by position
   if (filters.position && filters.position.length > 0) {
-    filteredCandidates = filteredCandidates.filter(candidate => 
-      filters.position!.some(pos => candidate.position.toLowerCase().includes(pos.toLowerCase()))
+    filteredCandidates = filteredCandidates.filter(candidate =>
+      typeof candidate.position === 'string' &&
+      filters.position!.some((pos: string) =>
+        candidate.position!.toLowerCase().includes(pos.toLowerCase())
+      )
     )
   }
 
   // Filter by date range
   if (filters.dateRange) {
     filteredCandidates = filteredCandidates.filter(candidate => {
-      const candidateDate = new Date(candidate.created_at)
+      const candidateDate = candidate.created_at ? new Date(candidate.created_at) : null
+      if (!candidateDate) return false
       return candidateDate >= filters.dateRange!.start && candidateDate <= filters.dateRange!.end
     })
   }
@@ -107,10 +113,10 @@ function createStyledWorkbook(data: Record<string, any>[], title: string) {
   const columnWidths: { wch: number }[] = []
   const headers = Object.keys(data[0] || {})
   
-  headers.forEach((header, index) => {
-    let maxWidth = header.length
+  headers.forEach((col: string, index: number) => {
+    let maxWidth = col.length
     data.forEach(row => {
-      const cellValue = String(row[header] || '')
+      const cellValue = String(row[col] || '')
       maxWidth = Math.max(maxWidth, cellValue.length)
     })
     columnWidths[index] = { wch: Math.min(maxWidth + 2, 50) } // Max width 50 chars
@@ -133,6 +139,7 @@ function createStyledWorkbook(data: Record<string, any>[], title: string) {
         if (cell.v && typeof cell.v === 'string' && cell.v.startsWith('€')) {
           // Keep as formatted string
           cell.t = 's'
+          // Nota: per formattazione valuta reale in Excel servirebbe libreria xlsx-style o simili
         }
       }
     }
@@ -220,17 +227,20 @@ export async function exportSummaryReport(
     // Calculate summary statistics
     const totalCandidates = candidates.length
     const statusCounts = candidates.reduce((acc, candidate) => {
-      acc[candidate.status] = (acc[candidate.status] || 0) + 1
+      const statusKey = candidate.status ?? 'unknown';
+      acc[statusKey] = (acc[statusKey] || 0) + 1;
       return acc
     }, {} as Record<string, number>)
 
     const experienceCounts = candidates.reduce((acc, candidate) => {
-      acc[candidate.experience_level] = (acc[candidate.experience_level] || 0) + 1
+      const levelKey = candidate.experience_level ?? 'unknown';
+      acc[levelKey] = (acc[levelKey] || 0) + 1;
       return acc
     }, {} as Record<string, number>)
 
     const positionCounts = candidates.reduce((acc, candidate) => {
-      acc[candidate.position] = (acc[candidate.position] || 0) + 1
+      const key = candidate.position ?? 'unknown'
+      acc[key] = (acc[key] || 0) + 1
       return acc
     }, {} as Record<string, number>)
 
@@ -239,14 +249,14 @@ export async function exportSummaryReport(
       { Metrica: 'Totale Candidati', Valore: totalCandidates },
       { Metrica: '', Valore: '' }, // Empty row
       { Metrica: 'STATO CANDIDATI', Valore: '' },
-      ...Object.entries(statusCounts).map(([status, count]) => ({
-        Metrica: STATUS_TRANSLATIONS[status as keyof typeof STATUS_TRANSLATIONS],
+      ...Object.entries(statusCounts).map(([status, count]: [string, number]) => ({
+        Metrica: status && status in STATUS_TRANSLATIONS ? STATUS_TRANSLATIONS[status as keyof typeof STATUS_TRANSLATIONS] : status,
         Valore: count
       })),
       { Metrica: '', Valore: '' }, // Empty row
       { Metrica: 'LIVELLO ESPERIENZA', Valore: '' },
-      ...Object.entries(experienceCounts).map(([level, count]) => ({
-        Metrica: EXPERIENCE_TRANSLATIONS[level as keyof typeof EXPERIENCE_TRANSLATIONS],
+      ...Object.entries(experienceCounts).map(([level, count]: [string, number]) => ({
+        Metrica: level && level in EXPERIENCE_TRANSLATIONS ? EXPERIENCE_TRANSLATIONS[level as keyof typeof EXPERIENCE_TRANSLATIONS] : level,
         Valore: count
       })),
       { Metrica: '', Valore: '' }, // Empty row
@@ -254,7 +264,7 @@ export async function exportSummaryReport(
       ...Object.entries(positionCounts)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 10)
-        .map(([position, count]) => ({
+        .map(([position, count]: [string, number]) => ({
           Metrica: position,
           Valore: count
         }))
