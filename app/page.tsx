@@ -1,50 +1,95 @@
 'use client'
 
+import React from 'react'
 import { useRouter } from 'next/navigation'
-import { authHelpers } from '@/lib/supabase'
+import { supabase } from '../lib/supabase'
+import Dashboard from '../components/ManagerDashboard'
+import LoginForm from '../components/LoginForm'
+import type { User } from '../types'
 
 export default function HomePage() {
+  const [user, setUser] = React.useState<User | null>(null)
+  const [loading, setLoading] = React.useState(true)
   const router = useRouter()
 
-  const handleLogin = async (role: 'manager' | 'recruiter') => {
-    const { user, error } = await authHelpers.signInAnonymously(role)
-    if (error) {
-      alert('Errore di login. Verifica credenziali Supabase.')
-      return
-    }
+  React.useEffect(() => {
+    checkAuth()
+  }, [])
 
-    // Redirect in base al ruolo
-    if (role === 'manager') {
-      router.push('/manager/dashboard')
-    } else {
-      router.push('/recruiter/dashboard')
+  const checkAuth = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        // Get user profile data
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (error) {
+          console.error('Error fetching user profile:', error)
+          setUser(null)
+        } else {
+          setUser(profile)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking auth:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center px-4 text-white"
-      style={{
-        backgroundImage: "url('/bg-login.jpg')"
-      }}
-    >
-      <div className="bg-black bg-opacity-60 p-8 rounded-lg text-center max-w-md w-full">
-        <h1 className="text-3xl font-bold mb-4">Benvenuto nel Distretto Magnani</h1>
-        <p className="mb-6 text-gray-200">Seleziona il tuo ruolo per accedere alla dashboard</p>
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={() => handleLogin('manager')}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-          >
-            Accedi come Manager
-          </button>
-          <button
-            onClick={() => handleLogin('recruiter')}
-            className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
-          >
-            Accedi come Recruiter
-          </button>
+  const handleLogin = async (email: string, password: string) => {
+    const { data: loggedInUser, error } = await supabase.auth.signInWithPassword({ email, password })
+    
+    if (error) {
+      throw new Error(error.message)
+    }
+    
+    if (loggedInUser) {
+      setUser({
+        id: loggedInUser.user.id,
+        email: loggedInUser.user.email ?? '',
+        role: loggedInUser.user.user_metadata?.role ?? 'guest',
+        full_name: loggedInUser.user.user_metadata?.full_name ?? 'Utente',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    }
+  }
+
+  const handleLogout = async () => {
+    setUser(null)
+    router.push('/')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Caricamento...</p>
         </div>
       </div>
-    </main>
+    )
+  }
+
+  if (!user) {
+    return <LoginForm onLogin={handleLogin} />
+  }
+
+  return (
+    <>
+      {user.role === 'manager' && (
+        <Dashboard 
+          userId={user.id}
+          role="manager"
+          onLogout={handleLogout}
+        />
+      )}
+    </>
   )
 }
