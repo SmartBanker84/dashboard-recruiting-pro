@@ -88,7 +88,7 @@ export function MonthlyChart({
           font: {
             size: 12,
             family: 'Inter, system-ui, sans-serif',
-            weight: '500'
+            weight: 500 // <-- CORRETTO: numero, non stringa
           },
           color: '#64748b' // secondary-500
         }

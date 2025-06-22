@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { authHelpers } from '@/lib/supabase'
 import { getUserProfile, updateUserProfile } from '@/lib/supabase/profile'
 import { Loader, Save } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<any>(null)
@@ -10,23 +11,32 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ name: '', email: '' })
   const [success, setSuccess] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
 
-  // Per sbloccare la build, puoi utilizzare una stringa dummy come userId.
-  const userId = 'dummy-user-id'
-  
   useEffect(() => {
-    getUserProfile(userId).then(data => {
+    async function fetchProfile() {
+      setLoading(true)
+      setUserId(null)
+      const { user } = await authHelpers.getCurrentUser()
+      if (!user) {
+        setLoading(false)
+        return
+      }
+      setUserId(user.id)
+      const data = await getUserProfile(user.id)
       setProfile(data)
       setForm({ name: data?.full_name || '', email: data?.email || '' })
       setLoading(false)
-    })
-  }, [userId])
+    }
+    fetchProfile()
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
   const handleSave = async () => {
+    if (!userId) return
     setSaving(true)
     await updateUserProfile(userId, {
       full_name: form.name,
