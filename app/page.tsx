@@ -1,57 +1,14 @@
-'use client'
-
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { authHelpers } from '@/lib/supabase'
+// File: app/page.tsx
+import Link from 'next/link'
 
 export default function HomePage() {
-  const router = useRouter()
-
-  useEffect(() => {
-    const userRole = localStorage.getItem('userRole')
-
-    if (userRole === 'manager') {
-      router.push('/manager/dashboard')
-    } else if (userRole === 'recruiter') {
-      router.push('/recruiter/dashboard')
-    }
-  }, [router])
-
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen gap-4 text-center p-8">
-      <h1 className="text-2xl font-bold">Benvenuto nella piattaforma Recruiting</h1>
-      <p className="text-gray-500">Seleziona il tuo ruolo per iniziare</p>
-      <div className="flex gap-4 mt-4">
-        <button
-          onClick={async () => {
-            const { user, error } = await authHelpers.signInAnonymously('manager')
-            if (user) {
-              localStorage.setItem('userRole', 'manager')
-              router.push('/manager/dashboard')
-            } else {
-              console.error('Errore login manager:', error)
-              alert('Errore di accesso come Manager')
-            }
-          }}
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Accedi come Manager
-        </button>
-        <button
-          onClick={async () => {
-            const { user, error } = await authHelpers.signInAnonymously('recruiter')
-            if (user) {
-              localStorage.setItem('userRole', 'recruiter')
-              router.push('/recruiter/dashboard')
-            } else {
-              console.error('Errore login recruiter:', error)
-              alert('Errore di accesso come Recruiter')
-            }
-          }}
-          className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Accedi come Recruiter
-        </button>
+    <main className="p-8">
+      <h1 className="text-2xl font-bold text-gray-800">Benvenuto sulla Dashboard Recruiting</h1>
+      <p className="mt-2 text-gray-600">Scegli un ruolo per accedere alla dashboard:</p>
+      <div className="mt-4 space-x-4">
+        <Link href="/manager/dashboard" className="text-blue-600 hover:underline">Dashboard Manager</Link>
+        <Link href="/recruiter/dashboard" className="text-green-600 hover:underline">Dashboard Recruiter</Link>
       </div>
     </main>
   )
