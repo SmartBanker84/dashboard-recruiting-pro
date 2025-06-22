@@ -14,27 +14,41 @@ export const createClientSupabase = () => createClientComponentClient<Database>(
 
 // Auth helpers (client-side only)
 export const authHelpers = {
-  // Simple login/signup (for demo purposes)
   async signInAnonymously(userRole: UserRole) {
-    const { data, error } = await supabase.auth.signInAnonymously()
-    console.log('LOGIN:', data)
-    
-    if (error) return { user: null, error }
-    
-    // Create or update user profile with role
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('users')
-        .upsert({
-          id: data.user.id,
-          email: `${userRole}@example.com`,
-          full_name: `Demo ${userRole.charAt(0).toUpperCase() + userRole.slice(1)}`,
-          role: userRole
-        })
-      
-      if (profileError) console.error('Profile creation error:', profileError)
+    // Login con utenti reali già registrati in Supabase
+    const credentials: Record<UserRole, { email: string; password: string }> = {
+      manager: {
+        email: 'simone.capo@yahoo.it',
+        password: '1234'
+      },
+      recruiter: {
+        email: 'carmen.durante@hotmail.it',
+        password: '1234'
+      },
+      admin: {
+        email: 'admin@distrettomagnani.it',
+        password: '1234'
+      },
+      guest: {
+        email: 'guest@distrettomagnani.it',
+        password: '1234'
+      }
     }
-    
+
+    const { email, password } = credentials[userRole]
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (error) {
+      console.error('LOGIN ERROR:', error.message)
+      return { user: null, error }
+    }
+
+    console.log('LOGIN:', data)
+
     return { user: data.user, error: null }
   },
 
