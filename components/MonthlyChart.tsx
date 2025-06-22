@@ -16,7 +16,8 @@ import {
 import { Line } from 'react-chartjs-2'
 import { Calendar, TrendingUp, Users, Briefcase } from 'lucide-react'
 import { clsx } from 'clsx'
-import type { MonthlyData, ChartData } from '../types'
+import type { MonthlyData } from '../types'
+import type { ChartData as ChartJSData } from 'chart.js'
 
 // Register Chart.js components
 ChartJS.register(
@@ -44,7 +45,7 @@ export function MonthlyChart({
   height = 300 
 }: MonthlyChartProps) {
   // Process data for Chart.js
-  const chartData: ChartData = React.useMemo(() => {
+  const chartData: ChartJSData<'line'> = React.useMemo(() => {
     const labels = data.map(item => item.month)
     
     return {

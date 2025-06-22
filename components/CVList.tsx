@@ -485,7 +485,9 @@ function CVCard({ candidate, onDownload, onPreview, onEdit, onDelete }: CVCardPr
           <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
             <Calendar className="h-3 w-3" />
             <span>
-              Aggiunto il {new Date(candidate.created_at).toLocaleDateString('it-IT')}
+              {candidate.created_at
+                ? `Aggiunto il ${new Date(candidate.created_at).toLocaleDateString('it-IT')}`
+                : 'Data non disponibile'}
             </span>
           </div>
         </div>

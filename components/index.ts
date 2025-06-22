@@ -35,8 +35,7 @@ export {
 } from './ManagerDashboard'
 
 export { 
-  RecruitingDashboard,
-  default as RecruitingDashboardDefault 
+  default as RecruitingDashboard 
 } from './RecruitingDashboard'
 
 // Re-export types if needed
