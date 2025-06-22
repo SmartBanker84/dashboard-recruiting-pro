@@ -115,6 +115,9 @@ export default function RoleLayout({ children }: RoleLayoutProps) {
 
         {/* Role-specific metadata injection */}
         <RoleMetadata role={role} />
+        {/* Preconnect/DNS-prefetch for Supabase */}
+        <link rel="preconnect" href="https://hhyloiuzgaggednuuern.supabase.co" />
+        <link rel="dns-prefetch" href="//hhyloiuzgaggednuuern.supabase.co" />
 
         {/* Main content with role context */}
         <main 
