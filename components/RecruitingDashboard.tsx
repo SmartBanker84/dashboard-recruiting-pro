@@ -26,7 +26,7 @@ import { format, isToday, isTomorrow, isThisWeek, addDays } from 'date-fns'
 import { it } from 'date-fns/locale'
 
 import { KPICard, KPIGrid, KPIGridWithLoading, CompactKPICard } from './KPI'
-import { MonthlyChart, ChartWrapper } from './MonthlyChart'
+import { MonthlyChart } from './MonthlyChart'
 import { CVList } from './CVList'
 import { AddCandidateModal } from './AddCandidateModal'
 import { exportCandidatesToExcel } from '../utils/exportToExcel'
@@ -46,8 +46,7 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
   const [monthlyData, setMonthlyData] = React.useState<MonthlyData[]>([])
   const [loading, setLoading] = React.useState(true)
   const [refreshing, setRefreshing] = React.useState(false)
-  const [showAddModal, setShowAddModal] = React.useState(false)
-  const [editingCandidate, setEditingCandidate] = React.useState<Candidate | null>(null)
+  const [modalState, setModalState] = React.useState<{ mode: 'add' | 'edit'; candidate?: Candidate } | null>(null)
   const [selectedView, setSelectedView] = React.useState<'all' | 'today' | 'thisweek'>('all')
   const [quickFilter, setQuickFilter] = React.useState<CandidateStatus | 'all'>('all')
 
@@ -125,7 +124,7 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
   }
 
   const handleEditCandidate = (candidate: Candidate) => {
-    setEditingCandidate(candidate)
+    setModalState({ mode: 'edit', candidate })
   }
 
   const handleDeleteCandidate = async (candidateId: string) => {
@@ -151,8 +150,7 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
   }
 
   const handleModalSuccess = () => {
-    setShowAddModal(false)
-    setEditingCandidate(null)
+    setModalState(null)
     loadDashboardData()
   }
 
@@ -221,7 +219,7 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
           {/* Quick filter */}
           <select
             value={quickFilter}
-            onChange={(e) => setQuickFilter(e.target.value as any)}
+            onChange={(e) => setQuickFilter(e.target.value as CandidateStatus | 'all')}
             className="rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm"
           >
             <option value="all">Tutti gli stati</option>
@@ -233,6 +231,7 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
 
           {/* Actions */}
           <button
+            aria-label="Aggiorna dati"
             onClick={handleRefresh}
             disabled={refreshing}
             className="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50 disabled:opacity-50"
@@ -242,6 +241,7 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
           </button>
 
           <button
+            aria-label="Esporta candidati"
             onClick={handleExportExcel}
             className="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
           >
@@ -250,7 +250,7 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
           </button>
 
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => setModalState({ mode: 'add' })}
             className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             <UserPlus className="h-4 w-4" />
@@ -351,13 +351,11 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
       </div>
 
       {/* Performance Chart */}
-      <ChartWrapper>
-        <MonthlyChart 
-          data={monthlyData} 
-          loading={loading}
-          height={300}
-        />
-      </ChartWrapper>
+      <MonthlyChart 
+        data={monthlyData} 
+        loading={loading}
+        height={300}
+      />
 
       {/* My Pipeline */}
       <div className="rounded-2xl border border-secondary-200 bg-white p-6">
@@ -384,18 +382,11 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
 
       {/* Modals */}
       <AddCandidateModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        isOpen={!!modalState}
+        onClose={() => setModalState(null)}
         onSuccess={handleModalSuccess}
         userId={userId}
-      />
-
-      <AddCandidateModal
-        isOpen={Boolean(editingCandidate)}
-        onClose={() => setEditingCandidate(null)}
-        onSuccess={handleModalSuccess}
-        candidate={editingCandidate || undefined}
-        userId={userId}
+        candidate={modalState?.candidate}
       />
     </div>
   )
@@ -476,6 +467,7 @@ function UrgentCandidateCard({ candidate, onStatusUpdate, onEdit }: UrgentCandid
             </button>
           ))}
           <button
+            aria-label="Modifica candidato"
             onClick={onEdit}
             className="rounded-lg p-2 text-secondary-400 hover:bg-white hover:text-secondary-600"
           >

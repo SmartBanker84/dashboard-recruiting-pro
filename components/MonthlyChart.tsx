@@ -189,7 +189,7 @@ export function MonthlyChart({
       totalHired,
       totalInterviews,
       candidatesTrend: candidatesTrend.toFixed(1),
-      conversionRate: totalCandidates > 0 ? ((totalHired / totalCandidates) * 100).toFixed(1) : '0'
+      conversionRate: totalCandidates > 0 ? parseFloat(((totalHired / totalCandidates) * 100).toFixed(1)) : 0
     }
   }, [data])
 
@@ -260,7 +260,11 @@ export function MonthlyChart({
       )}
 
       {/* Chart */}
-      <div style={{ height: `${height}px` }}>
+      <div
+        style={{ height: `${height}px` }}
+        role="img"
+        aria-label="Grafico dell'andamento mensile di candidati, colloqui e assunzioni"
+      >
         <Line data={chartData} options={options} />
       </div>
     </div>
@@ -329,46 +333,6 @@ function EmptyChart({ height }: { height: number }) {
       </div>
     </div>
   )
-}
-
-// Chart wrapper with error boundary
-interface ChartWrapperProps {
-  children: React.ReactNode
-  fallback?: React.ReactNode
-}
-
-export function ChartWrapper({ children, fallback }: ChartWrapperProps) {
-  const [hasError, setHasError] = React.useState(false)
-
-  React.useEffect(() => {
-    setHasError(false)
-  }, [children])
-
-  if (hasError) {
-    return (
-      fallback || (
-        <div className="rounded-2xl border border-danger-200 bg-danger-50 p-6">
-          <div className="text-center">
-            <TrendingUp className="h-12 w-12 text-danger-400 mx-auto mb-4" />
-            <h4 className="text-lg font-medium text-danger-700 mb-2">
-              Errore nel caricamento del grafico
-            </h4>
-            <p className="text-sm text-danger-600">
-              Si è verificato un errore durante la visualizzazione dei dati
-            </p>
-          </div>
-        </div>
-      )
-    )
-  }
-
-  try {
-    return <>{children}</>
-  } catch (error) {
-    setHasError(true)
-    console.error('Chart error:', error)
-    return null
-  }
 }
 
 export default MonthlyChart

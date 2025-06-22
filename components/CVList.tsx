@@ -168,6 +168,7 @@ export function CVList({
       document.body.removeChild(a)
     } catch (error) {
       console.error('Error downloading CV:', error)
+      alert('Errore durante il download del CV')
     }
   }
 
@@ -245,6 +246,7 @@ export function CVList({
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
+                aria-label="Cancella tutti i filtri"
                 className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
               >
                 <X className="h-4 w-4" />
@@ -494,6 +496,7 @@ function CVCard({ candidate, onDownload, onPreview, onEdit, onDelete }: CVCardPr
             <div className="flex gap-2">
               <button
                 onClick={onPreview}
+                aria-label="Anteprima CV"
                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 title="Anteprima CV"
               >
@@ -501,6 +504,7 @@ function CVCard({ candidate, onDownload, onPreview, onEdit, onDelete }: CVCardPr
               </button>
               <button
                 onClick={onDownload}
+                aria-label="Scarica CV"
                 className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                 title="Scarica CV"
               >
@@ -518,6 +522,7 @@ function CVCard({ candidate, onDownload, onPreview, onEdit, onDelete }: CVCardPr
               {onEdit && (
                 <button
                   onClick={() => onEdit(candidate)}
+                  aria-label="Modifica candidato"
                   className="text-blue-600 hover:underline text-xs"
                   title="Modifica"
                 >
@@ -527,6 +532,7 @@ function CVCard({ candidate, onDownload, onPreview, onEdit, onDelete }: CVCardPr
               {onDelete && (
                 <button
                   onClick={() => onDelete(candidate.id)}
+                  aria-label="Elimina candidato"
                   className="text-red-600 hover:underline text-xs"
                   title="Elimina"
                 >

@@ -271,6 +271,7 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId, candidat
           </div>
           <button
             onClick={onClose}
+            aria-label="Chiudi modale"
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="h-5 w-5" />
@@ -305,6 +306,7 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId, candidat
                   errors.full_name ? 'border-red-300' : 'border-gray-300'
                 )}
                 placeholder="Es. Mario Rossi"
+                aria-invalid={!!errors.full_name}
               />
               {errors.full_name && (
                 <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
@@ -326,6 +328,7 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId, candidat
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 )}
                 placeholder="mario.rossi@email.com"
+                aria-invalid={!!errors.email}
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -347,6 +350,7 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId, candidat
                   errors.phone ? 'border-red-300' : 'border-gray-300'
                 )}
                 placeholder="+39 123 456 7890"
+                aria-invalid={!!errors.phone}
               />
               {errors.phone && (
                 <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
@@ -368,6 +372,7 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId, candidat
                   errors.position ? 'border-red-300' : 'border-gray-300'
                 )}
                 placeholder="Es. Frontend Developer"
+                aria-invalid={!!errors.position}
               />
               {errors.position && (
                 <p className="mt-1 text-sm text-red-600">{errors.position}</p>
@@ -472,7 +477,12 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId, candidat
                   type="text"
                   value={skillInput}
                   onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyPress={handleSkillKeyPress}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addSkill()
+                    }
+                  }}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Es. React, JavaScript, Python..."
                 />
@@ -496,6 +506,7 @@ export function AddCandidateModal({ isOpen, onClose, onSuccess, userId, candidat
                       <button
                         type="button"
                         onClick={() => removeSkill(skill)}
+                        aria-label={`Rimuovi skill ${skill}`}
                         className="ml-1 text-blue-600 hover:text-blue-800"
                       >
                         <X className="h-3 w-3" />
