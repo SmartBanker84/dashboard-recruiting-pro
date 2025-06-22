@@ -13,8 +13,7 @@ export {
 
 // Chart Components
 export { 
-  MonthlyChart, 
-  ChartWrapper 
+  MonthlyChart 
 } from './MonthlyChart'
 
 // List and Table Components
