@@ -1,5 +1,3 @@
-
-
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -9,9 +7,13 @@ import RecruitingDashboard from '@/components/RecruitingDashboard'
 
 export default function RecruitingDashboardPage() {
   const [userId, setUserId] = useState<string | null>(null)
-  const [role, setRole] = useState<'recruiter' | 'manager' | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+
+  const handleSignOut = async () => {
+    await authHelpers.signOut();
+    router.push('/');
+  }
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -24,7 +26,6 @@ export default function RecruitingDashboardPage() {
       }
 
       setUserId(user.id)
-      setRole('recruiter')
       setLoading(false)
     }
 
@@ -35,7 +36,7 @@ export default function RecruitingDashboardPage() {
 
   return (
     <div className="p-6">
-      <RecruitingDashboard userId={userId!} role={role!} />
+      <RecruitingDashboard userId={userId!} role="recruiter" onLogout={handleSignOut} />
     </div>
   )
 }
