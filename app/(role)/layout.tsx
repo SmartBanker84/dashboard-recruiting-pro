@@ -4,8 +4,8 @@ import React from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { AlertCircle, Wifi, WifiOff } from 'lucide-react'
 import { clsx } from 'clsx'
-import Sidebar from '../../components/Sidebar'
-import MobileNav from '../../components/MobileNav'
+import Sidebar from '@/components/Sidebar'
+import MobileNav from '@/components/MobileNav'
 import type { UserRole } from '../../types'
 
 interface RoleLayoutProps {
@@ -18,7 +18,7 @@ export default function RoleLayout({ children }: RoleLayoutProps) {
   const [isOnline, setIsOnline] = React.useState(true)
   const [showOfflineMessage, setShowOfflineMessage] = React.useState(false)
 
-  const role = params.role as UserRole
+  const role = params.role as 'manager' | 'recruiter'
 
   // Validate role parameter
   React.useEffect(() => {
@@ -220,7 +220,7 @@ interface RoleMetadataProps {
 function RoleMetadata({ role }: RoleMetadataProps) {
   React.useEffect(() => {
     // Update document title based on role
-    const titles = {
+    const titles: Record<string, string> = {
       manager: 'Dashboard Manager - Recruiting',
       recruiter: 'Dashboard Recruiter - Recruiting'
     }
