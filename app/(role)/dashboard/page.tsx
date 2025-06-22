@@ -235,7 +235,7 @@ export default function DashboardPage() {
             <ManagerDashboard userId={user.id} role={role} onLogout={handleSignOut} />
           )}
           {role === 'recruiter' && (
-            <RecruitingDashboard userId={user.id} role={role} />
+            <RecruitingDashboard userId={user.id} role="recruiter" onLogout={handleSignOut} />
           )}
 
           {/* Widget aggiuntivi in dashboard */}
