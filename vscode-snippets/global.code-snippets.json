@@ -1,0 +1,184 @@
+{
+	// Place your global snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and 
+	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope 
+	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is 
+	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are: 
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. 
+	// Placeholders with the same ids are connected.
+	// Example:
+	// "Print to console": {
+	// 	"scope": "javascript,typescript",
+	// 	"prefix": "log",
+	// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+	"Log to console": {
+		"scope": "",
+		"prefix": "log",
+		"body": [
+			"console.log('$1');",
+			"$2"
+		],
+		"description": "Log output to console"
+	},
+	"Debug log block": {
+		"scope": "",
+		"prefix": "debuglog",
+		"body": [
+			"// DEBUG: $1",
+			"console.group('$1');",
+			"console.log('Value:', $2);",
+			"console.trace();",
+			"console.groupEnd();",
+			"$0"
+		],
+		"description": "Debug log group with message, value and stack trace"
+	},
+	"Debug Recruiting Log": {
+		"scope": "",
+		"prefix": "debugrecruit",
+		"body": [
+			"// DEBUG [${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE} ${CURRENT_HOUR}:${CURRENT_MINUTE}]: $1",
+			"console.group('DEBUG - $1');",
+			"console.log('User:', $2);",
+			"console.log('Candidate:', $3);",
+			"console.log('Status:', $4);",
+			"console.trace();",
+			"console.groupEnd();",
+			"$0"
+		],
+		"description": "Debug log group tailored for recruiting dashboard"
+	},
+	"Supabase Client Init": {
+	  "scope": "",
+	  "prefix": "supabaseinit",
+	  "body": [
+	    "import { createClient } from '@supabase/supabase-js'",
+	    "",
+	    "const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!",
+	    "const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!",
+	    "",
+	    "export const supabase = createClient(supabaseUrl, supabaseAnonKey)",
+	    ""
+	  ],
+	  "description": "Initialize Supabase client"
+	},
+	"Supabase Select": {
+	  "scope": "",
+	  "prefix": "supabaseSelect",
+	  "body": [
+	    "const { data, error } = await supabase",
+	    "  .from('$1')",
+	    "  .select('$2')",
+	    "  .eq('$3', $4)",
+	    "",
+	    "if (error) {",
+	    "  console.error('Error fetching data:', error)",
+	    "} else {",
+	    "  console.log('Data:', data)",
+	    "}",
+	    ""
+	  ],
+	  "description": "Supabase select query with filter"
+	},
+	"Supabase Insert": {
+	  "scope": "",
+	  "prefix": "supabaseInsert",
+	  "body": [
+	    "const { data, error } = await supabase",
+	    "  .from('$1')",
+	    "  .insert([$2])",
+	    "",
+	    "if (error) {",
+	    "  console.error('Error inserting data:', error)",
+	    "} else {",
+	    "  console.log('Insert success:', data)",
+	    "}",
+	    ""
+	  ],
+	  "description": "Supabase insert query"
+	},
+	"Supabase Update": {
+	  "scope": "",
+	  "prefix": "supabaseUpdate",
+	  "body": [
+	    "const { data, error } = await supabase",
+	    "  .from('$1')",
+	    "  .update($2)",
+	    "  .eq('$3', $4)",
+	    "",
+	    "if (error) {",
+	    "  console.error('Error updating data:', error)",
+	    "} else {",
+	    "  console.log('Update success:', data)",
+	    "}",
+	    ""
+	  ],
+	  "description": "Supabase update query"
+	},
+	"Supabase Delete": {
+	  "scope": "",
+	  "prefix": "supabaseDelete",
+	  "body": [
+	    "const { data, error } = await supabase",
+	    "  .from('$1')",
+	    "  .delete()",
+	    "  .eq('$2', $3)",
+	    "",
+	    "if (error) {",
+	    "  console.error('Error deleting data:', error)",
+	    "} else {",
+	    "  console.log('Delete success:', data)",
+	    "}",
+	    ""
+	  ],
+	  "description": "Supabase delete query"
+	},
+	"Supabase Upsert": {
+	  "scope": "",
+	  "prefix": "supabaseUpsert",
+	  "body": [
+	    "const { data, error } = await supabase",
+	    "  .from('$1')",
+	    "  .upsert($2)",
+	    "",
+	    "if (error) {",
+	    "  console.error('Error upserting data:', error)",
+	    "} else {",
+	    "  console.log('Upsert success:', data)",
+	    "}",
+	    ""
+	  ],
+	  "description": "Supabase upsert query"
+	},
+	"Supabase Auth SignIn": {
+	  "scope": "",
+	  "prefix": "supabaseAuthSignIn",
+	  "body": [
+	    "const { data, error } = await supabase.auth.signInWithPassword({",
+	    "  email: '$1',",
+	    "  password: '$2',",
+	    "})",
+	    "",
+	    "if (error) {",
+	    "  console.error('Login error:', error)",
+	    "} else {",
+	    "  console.log('User signed in:', data.user)",
+	    "}",
+	    ""
+	  ],
+	  "description": "Supabase auth sign in with email and password"
+	},
+	"Supabase Auth SignOut": {
+	  "scope": "",
+	  "prefix": "supabaseSignOut",
+	  "body": [
+	    "const { error } = await supabase.auth.signOut()",
+	    "if (error) console.error('Logout error:', error)"
+	  ],
+	  "description": "Supabase auth sign out"
+	}
+}
