@@ -28,18 +28,19 @@ export default function HomePage() {
 
   const handleRoleSelection = async (role: UserRole) => {
     try {
+      console.log('Clicked role:', role)
       setLoading(role)
       setError(null)
 
-      // Sign in anonymously with selected role
       const { user, error: authError } = await authHelpers.signInAnonymously(role)
-      
+      console.log('LOGIN:', { user, authError })
+
       if (authError) {
         throw new Error(authError.message)
       }
 
       if (user) {
-        // Redirect to role-specific dashboard
+        localStorage.setItem('userRole', role)
         router.push(`/${role}/dashboard`)
       }
     } catch (err) {
