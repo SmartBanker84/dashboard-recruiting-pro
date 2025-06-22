@@ -211,6 +211,15 @@ export interface KPICardProps {
   loading?: boolean
 }
 
+export interface CompactKPICardProps {
+  title: string
+  value: string | number
+  icon?: React.ReactNode
+  color?: KPIColor
+  loading?: boolean
+  size?: 'sm' | 'xs'
+}
+
 export interface KPIGridProps {
   data: KPIData
   loading?: boolean
