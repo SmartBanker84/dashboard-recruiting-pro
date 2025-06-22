@@ -224,7 +224,7 @@ export function RecruitingDashboard({ userRole, userId }: DashboardProps) {
           >
             <option value="all">Tutti gli stati</option>
             <option value="new">Nuovi</option>
-            <option value="screening">Screening</option>
+            <option value="review">Screening</option>
             <option value="interview">Colloquio</option>
             <option value="offer">Offerta</option>
           </select>
@@ -409,8 +409,8 @@ function UrgentCandidateCard({ candidate, onStatusUpdate, onEdit }: UrgentCandid
   const getNextActions = () => {
     switch (candidate.status) {
       case 'new':
-        return [{ label: 'Avvia Screening', status: 'screening' as CandidateStatus }]
-      case 'screening':
+        return [{ label: 'Avvia Screening', status: 'review' as CandidateStatus }]
+      case 'review':
         return [{ label: 'Pianifica Colloquio', status: 'interview' as CandidateStatus }]
       case 'interview':
         return [
@@ -455,7 +455,7 @@ function UrgentCandidateCard({ candidate, onStatusUpdate, onEdit }: UrgentCandid
           {getNextActions().map(action => (
             <button
               key={action.status}
-              onClick={() => onStatusUpdate(candidate.id, action.status)}
+              onClick={() => onStatusUpdate(candidate.id, action.status as CandidateStatus)}
               className={clsx(
                 'rounded-lg px-3 py-1 text-xs font-medium transition-colors',
                 action.status === 'rejected'
@@ -489,7 +489,7 @@ interface PipelineViewProps {
 function PipelineView({ candidates, onStatusUpdate, onEdit }: PipelineViewProps) {
   const pipelineStages = [
     { status: 'new' as CandidateStatus, label: 'Nuovi', color: 'bg-blue-100 text-blue-800' },
-    { status: 'screening' as CandidateStatus, label: 'Screening', color: 'bg-yellow-100 text-yellow-800' },
+    { status: 'review' as CandidateStatus, label: 'Screening', color: 'bg-yellow-100 text-yellow-800' },
     { status: 'interview' as CandidateStatus, label: 'Colloquio', color: 'bg-purple-100 text-purple-800' },
     { status: 'offer' as CandidateStatus, label: 'Offerta', color: 'bg-orange-100 text-orange-800' },
     { status: 'hired' as CandidateStatus, label: 'Assunti', color: 'bg-green-100 text-green-800' }

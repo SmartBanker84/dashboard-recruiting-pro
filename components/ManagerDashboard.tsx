@@ -22,7 +22,7 @@ import { format, subDays, startOfMonth, endOfMonth } from 'date-fns'
 import { it } from 'date-fns/locale'
 
 import { KPICard, KPIGrid, KPIGridWithLoading } from './KPI'
-import { MonthlyChart, ChartWrapper } from './MonthlyChart'
+import { MonthlyChart } from './MonthlyChart'
 import { CVList } from './CVList'
 import { AddCandidateModal } from './AddCandidateModal'
 import { exportCandidatesToExcel, exportSummaryReport } from '../utils/exportToExcel'
@@ -378,13 +378,11 @@ export function ManagerDashboard({ userRole, userId }: DashboardProps) {
 
       {/* Charts */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-1">
-        <ChartWrapper>
-          <MonthlyChart 
-            data={monthlyData} 
-            loading={loading}
-            height={350}
-          />
-        </ChartWrapper>
+        <MonthlyChart 
+          data={monthlyData} 
+          loading={loading}
+          height={350}
+        />
       </div>
 
       {/* Team Performance (Mock) */}
