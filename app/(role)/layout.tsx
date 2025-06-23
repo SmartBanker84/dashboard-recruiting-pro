@@ -6,6 +6,7 @@ import { AlertCircle, Wifi, WifiOff } from 'lucide-react'
 import { clsx } from 'clsx'
 import Sidebar from '@/components/Sidebar'
 import MobileNav from '@/components/MobileNav'
+import Topbar from '@/components/Topbar'
 import type { UserRole } from '../../types'
 
 interface RoleLayoutProps {
@@ -93,12 +94,12 @@ export default function RoleLayout({ children }: RoleLayoutProps) {
   return (
     <div className="role-layout min-h-screen flex">
       {/* Sidebar desktop */}
-      <aside className="hidden md:block">
+      <aside className="hidden md:flex md:w-64 border-r border-gray-200 bg-white shadow-sm z-10">
         <Sidebar role={role} />
       </aside>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      {/* Wrapper principale con Topbar e contenuti */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden relative bg-gray-50">
         {/* Accessibility landmarks */}
         <a 
           href="#main-content" 
@@ -106,6 +107,8 @@ export default function RoleLayout({ children }: RoleLayoutProps) {
         >
           Vai al contenuto principale
         </a>
+
+        <Topbar />
 
         {/* Connection status indicator */}
         <ConnectionStatus 
@@ -122,7 +125,7 @@ export default function RoleLayout({ children }: RoleLayoutProps) {
         {/* Main content with role context */}
         <main 
           id="main-content"
-          className="role-content flex-1"
+          className="role-content flex-1 px-6 py-6 max-w-7xl mx-auto bg-white"
           data-role={role}
           role="main"
           aria-label={`Dashboard ${role}`}
@@ -138,6 +141,7 @@ export default function RoleLayout({ children }: RoleLayoutProps) {
 
       {/* Mobile bottom navigation */}
       <MobileNav role={role} />
+      <div className="h-16 md:hidden" />
 
       {/* Role-specific styles */}
       <style dangerouslySetInnerHTML={{
