@@ -89,11 +89,11 @@ export interface ExportOptions {
 
 // KPI types
 export interface KPIData {
-  totalCandidates: number;
-  newCandidates: number;
-  activeInterviews: number;
+  total_candidates: number;
+  new_candidates: number;
+  active_interviews: number;
   hired: number;
-  conversionRate: number;
+  conversion_rate: number;
 }
 
 // Dati mensili per grafici/dashboard
@@ -253,6 +253,11 @@ export interface Database {
         Row: Candidate;
         Insert: Omit<Candidate, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<Candidate, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      kpi_summary: {
+        Row: KPIData;
+        Insert: Omit<KPIData, never>;
+        Update: Partial<Omit<KPIData, never>>;
       };
     };
     Views: {
