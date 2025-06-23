@@ -38,11 +38,216 @@ import type {
 
 interface ManagerDashboardProps {
   userId: string;
-  role: 'manager';
+  fullName: string;
+  email: string;
+  role: 'manager' | 'recruiter';
   onLogout: () => Promise<void>;
 }
 
-export function ManagerDashboard({ userId, role, onLogout }: ManagerDashboardProps) {
+// FiltersBar component
+function FiltersBar({
+  selectedDateRange,
+  setSelectedDateRange,
+  selectedRecruiter,
+  setSelectedRecruiter,
+  recruiters,
+  handleRefresh,
+  refreshing,
+  handleExportSummary,
+  handleExportExcel,
+  setShowAddModal,
+}: {
+  selectedDateRange: {start: Date, end: Date},
+  setSelectedDateRange: (range: {start: Date, end: Date}) => void,
+  selectedRecruiter: string,
+  setSelectedRecruiter: (id: string) => void,
+  recruiters: Array<{id: string; name: string}>,
+  handleRefresh: () => void,
+  refreshing: boolean,
+  handleExportSummary: () => void,
+  handleExportExcel: () => void,
+  setShowAddModal: (b: boolean) => void,
+}) {
+  return (
+    <div className="flex flex-wrap gap-3">
+      {/* Date range selector */}
+      <select
+        value={`${selectedDateRange.start.toISOString()}-${selectedDateRange.end.toISOString()}`}
+        onChange={(e) => {
+          const [start, end] = e.target.value.split('-').map(d => new Date(d))
+          setSelectedDateRange({ start, end })
+        }}
+        className="rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm"
+      >
+        <option value={`${startOfMonth(new Date()).toISOString()}-${endOfMonth(new Date()).toISOString()}`}>
+          Questo mese
+        </option>
+        <option value={`${subDays(new Date(), 30).toISOString()}-${new Date().toISOString()}`}>
+          Ultimi 30 giorni
+        </option>
+        <option value={`${subDays(new Date(), 90).toISOString()}-${new Date().toISOString()}`}>
+          Ultimi 3 mesi
+        </option>
+      </select>
+
+      {/* Recruiter filter */}
+      <select
+        value={selectedRecruiter}
+        onChange={(e) => setSelectedRecruiter(e.target.value)}
+        className="rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm"
+      >
+        <option value="all">Tutti i recruiter</option>
+        {recruiters.map(recruiter => (
+          <option key={recruiter.id} value={recruiter.id}>
+            {recruiter.name}
+          </option>
+        ))}
+      </select>
+
+      {/* Actions */}
+      <button
+        onClick={handleRefresh}
+        disabled={refreshing}
+        className="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50 disabled:opacity-50"
+      >
+        <RefreshCw className={clsx('h-4 w-4', refreshing && 'animate-spin')} />
+        Aggiorna
+      </button>
+
+      <button
+        onClick={handleExportSummary}
+        className="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
+      >
+        <PieChart className="h-4 w-4" />
+        Riepilogo
+      </button>
+
+      <button
+        onClick={handleExportExcel}
+        className="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
+      >
+        <Download className="h-4 w-4" />
+        Esporta
+      </button>
+
+      <button
+        onClick={() => setShowAddModal(true)}
+        className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+      >
+        <Users className="h-4 w-4" />
+        Aggiungi Candidato
+      </button>
+    </div>
+  )
+}
+
+// MetricsPanel component
+function MetricsPanel({ managerMetrics }: { managerMetrics: any }) {
+  if (!managerMetrics) return null;
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Average Salary */}
+      <div className="rounded-2xl border border-secondary-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success-100 text-success-600">
+            <DollarSign className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-secondary-900">RAL Media</h3>
+            <p className="text-2xl font-bold text-secondary-900">
+              €{managerMetrics.avgSalary.toLocaleString('it-IT', { maximumFractionDigits: 0 })}
+            </p>
+          </div>
+        </div>
+        <p className="text-sm text-secondary-600">
+          Media delle retribuzioni richieste
+        </p>
+      </div>
+      {/* Top Positions */}
+      <div className="rounded-2xl border border-secondary-200 bg-white p-6 lg:col-span-2 shadow-sm">
+        <h3 className="flex items-center gap-2 font-semibold text-secondary-900 mb-4">
+          <BarChart3 className="h-5 w-5 text-primary-600" />
+          Posizioni più Richieste
+        </h3>
+        <div className="space-y-3">
+          {managerMetrics.topPositions.map(([position, count]: [string, number], index: number) => {
+            const percentage = (count / managerMetrics.totalCandidates) * 100
+            return (
+              <div key={position} className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-primary-600 text-sm font-medium">
+                  {index + 1}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-secondary-900">{position}</span>
+                    <span className="text-sm text-secondary-600">{count} candidati</span>
+                  </div>
+                  <div className="h-2 bg-secondary-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary-500 rounded-full transition-all duration-500"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// TeamPerformance component
+function TeamPerformance({ recruiters }: { recruiters: Array<{id: string; name: string}> }) {
+  return (
+    <div className="rounded-2xl border border-secondary-200 bg-white p-6 shadow-sm">
+      <h3 className="flex items-center gap-2 font-semibold text-secondary-900 mb-6">
+        <Award className="h-5 w-5 text-primary-600" />
+        Performance Team
+      </h3>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {recruiters.map((recruiter, index) => {
+          // Mock performance data
+          const performance = {
+            candidates: Math.floor(Math.random() * 50) + 10,
+            hired: Math.floor(Math.random() * 10) + 1,
+            conversion: Math.floor(Math.random() * 30) + 10
+          }
+          return (
+            <div key={recruiter.id} className="rounded-xl border border-secondary-200 p-4 bg-white shadow">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-100 text-secondary-600 font-medium">
+                  {recruiter.name.split(' ').map(n => n[0]).join('')}
+                </div>
+                <div>
+                  <h4 className="font-medium text-secondary-900">{recruiter.name}</h4>
+                  <p className="text-sm text-secondary-600">Recruiter</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-secondary-600">Candidati</span>
+                  <span className="font-medium text-secondary-900">{performance.candidates}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-secondary-600">Assunzioni</span>
+                  <span className="font-medium text-secondary-900">{performance.hired}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-secondary-600">Conversione</span>
+                  <span className="font-medium text-secondary-900">{performance.conversion}%</span>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export function ManagerDashboard({ userId, role, onLogout, email, fullName }: ManagerDashboardProps) {
   // State management
   const [candidates, setCandidates] = React.useState<Candidate[]>([])
   const [kpiData, setKpiData] = React.useState<KPIData | null>(null)
@@ -220,232 +425,89 @@ export function ManagerDashboard({ userId, role, onLogout }: ManagerDashboardPro
   }, [candidates, selectedDateRange])
 
   return (
-    <div className="space-y-6">
-      {/* Logout Button */}
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={onLogout}
-          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition"
-        >
-          Logout
-        </button>
-      </div>
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <main className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
+      {/* Header and Logout */}
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-2">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">
-            Dashboard Manager
-          </h1>
-          <p className="text-secondary-600">
-            Vista completa delle attività di recruiting
-          </p>
+          <h1 className="text-2xl font-bold text-secondary-900">Dashboard Manager</h1>
+          <p className="text-secondary-500 text-sm">Benvenuto, {fullName}</p>
+          <p className="text-secondary-600">Vista completa delle attività di recruiting</p>
         </div>
-
-        <div className="flex flex-wrap gap-3">
-          {/* Date range selector */}
-          <select
-            value={`${selectedDateRange.start.toISOString()}-${selectedDateRange.end.toISOString()}`}
-            onChange={(e) => {
-              const [start, end] = e.target.value.split('-').map(d => new Date(d))
-              setSelectedDateRange({ start, end })
-            }}
-            className="rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm"
-          >
-            <option value={`${startOfMonth(new Date()).toISOString()}-${endOfMonth(new Date()).toISOString()}`}>
-              Questo mese
-            </option>
-            <option value={`${subDays(new Date(), 30).toISOString()}-${new Date().toISOString()}`}>
-              Ultimi 30 giorni
-            </option>
-            <option value={`${subDays(new Date(), 90).toISOString()}-${new Date().toISOString()}`}>
-              Ultimi 3 mesi
-            </option>
-          </select>
-
-          {/* Recruiter filter */}
-          <select
-            value={selectedRecruiter}
-            onChange={(e) => setSelectedRecruiter(e.target.value)}
-            className="rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm"
-          >
-            <option value="all">Tutti i recruiter</option>
-            {recruiters.map(recruiter => (
-              <option key={recruiter.id} value={recruiter.id}>
-                {recruiter.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Actions */}
+        <div className="flex justify-end">
           <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50 disabled:opacity-50"
+            onClick={onLogout}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition"
           >
-            <RefreshCw className={clsx('h-4 w-4', refreshing && 'animate-spin')} />
-            Aggiorna
-          </button>
-
-          <button
-            onClick={handleExportSummary}
-            className="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
-          >
-            <PieChart className="h-4 w-4" />
-            Riepilogo
-          </button>
-
-          <button
-            onClick={handleExportExcel}
-            className="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50"
-          >
-            <Download className="h-4 w-4" />
-            Esporta
-          </button>
-
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-          >
-            <Users className="h-4 w-4" />
-            Aggiungi Candidato
+            Logout
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Manager KPIs */}
-      {kpiData && (
-        <KPIHeader
-          loading={loading}
-          kpiData={{
-            totalCandidates: kpiData?.total_candidates || 0,
-            totalRecruiters: recruiters.length,
-            averageRAL: Math.round(managerMetrics?.avgSalary || 0),
-            conversionRate: kpiData?.conversion_rate || 0,
-          }}
-          managerMetrics={managerMetrics}
+      {/* Filters Bar */}
+      <section>
+        <FiltersBar
+          selectedDateRange={selectedDateRange}
+          setSelectedDateRange={setSelectedDateRange}
+          selectedRecruiter={selectedRecruiter}
+          setSelectedRecruiter={setSelectedRecruiter}
+          recruiters={recruiters}
+          handleRefresh={handleRefresh}
+          refreshing={refreshing}
+          handleExportSummary={handleExportSummary}
+          handleExportExcel={handleExportExcel}
+          setShowAddModal={setShowAddModal}
         />
+      </section>
+
+      {/* KPIs */}
+      {kpiData && (
+        <section>
+          <KPIHeader
+            loading={loading}
+            kpiData={{
+              totalCandidates: kpiData?.total_candidates || 0,
+              totalRecruiters: recruiters.length,
+              averageRAL: Math.round(managerMetrics?.avgSalary || 0),
+              conversionRate: kpiData?.conversion_rate || 0,
+            }}
+            managerMetrics={managerMetrics}
+          />
+        </section>
       )}
 
-      {/* Additional Manager Metrics */}
+      {/* Additional Metrics */}
       {managerMetrics && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Average Salary */}
-          <div className="rounded-2xl border border-secondary-200 bg-white p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success-100 text-success-600">
-                <DollarSign className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-secondary-900">RAL Media</h3>
-                <p className="text-2xl font-bold text-secondary-900">
-                  €{managerMetrics.avgSalary.toLocaleString('it-IT', { maximumFractionDigits: 0 })}
-                </p>
-              </div>
-            </div>
-            <p className="text-sm text-secondary-600">
-              Media delle retribuzioni richieste
-            </p>
-          </div>
-
-          {/* Top Positions */}
-          <div className="rounded-2xl border border-secondary-200 bg-white p-6 lg:col-span-2">
-            <h3 className="flex items-center gap-2 font-semibold text-secondary-900 mb-4">
-              <BarChart3 className="h-5 w-5 text-primary-600" />
-              Posizioni più Richieste
-            </h3>
-            <div className="space-y-3">
-              {managerMetrics.topPositions.map(([position, count], index) => {
-                const percentage = (count / managerMetrics.totalCandidates) * 100
-                return (
-                  <div key={position} className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-primary-600 text-sm font-medium">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-secondary-900">{position}</span>
-                        <span className="text-sm text-secondary-600">{count} candidati</span>
-                      </div>
-                      <div className="h-2 bg-secondary-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary-500 rounded-full transition-all duration-500"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
+        <section>
+          <MetricsPanel managerMetrics={managerMetrics} />
+        </section>
       )}
 
       {/* Charts */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-1">
-        <MonthlyChart 
-          data={monthlyData} 
-          loading={loading}
-          height={350}
-        />
-      </div>
-
-      {/* Team Performance (Mock) */}
-      <div className="rounded-2xl border border-secondary-200 bg-white p-6">
-        <h3 className="flex items-center gap-2 font-semibold text-secondary-900 mb-6">
-          <Award className="h-5 w-5 text-primary-600" />
-          Performance Team
-        </h3>
-        
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {recruiters.map((recruiter, index) => {
-            // Mock performance data
-            const performance = {
-              candidates: Math.floor(Math.random() * 50) + 10,
-              hired: Math.floor(Math.random() * 10) + 1,
-              conversion: Math.floor(Math.random() * 30) + 10
-            }
-            
-            return (
-              <div key={recruiter.id} className="rounded-xl border border-secondary-200 p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-100 text-secondary-600 font-medium">
-                    {recruiter.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-secondary-900">{recruiter.name}</h4>
-                    <p className="text-sm text-secondary-600">Recruiter</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-secondary-600">Candidati</span>
-                    <span className="font-medium text-secondary-900">{performance.candidates}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-secondary-600">Assunzioni</span>
-                    <span className="font-medium text-secondary-900">{performance.hired}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-secondary-600">Conversione</span>
-                    <span className="font-medium text-secondary-900">{performance.conversion}%</span>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+      <section>
+        <div className="grid grid-cols-1 gap-6">
+          <MonthlyChart 
+            data={monthlyData} 
+            loading={loading}
+            height={350}
+          />
         </div>
-      </div>
+      </section>
+
+      {/* Team Performance */}
+      <section>
+        <TeamPerformance recruiters={recruiters} />
+      </section>
 
       {/* Candidates Table */}
-      <CVList
-        candidates={candidates}
-        loading={loading}
-        onEdit={handleEditCandidate}
-        onDelete={handleDeleteCandidate}
-        onViewCV={(url) => window.open(url, '_blank')}
-      />
+      <section>
+        <CVList
+          candidates={candidates}
+          loading={loading}
+          onEdit={handleEditCandidate}
+          onDelete={handleDeleteCandidate}
+          onViewCV={(url) => window.open(url, '_blank')}
+        />
+      </section>
 
       {/* Modals */}
       <AddCandidateModal
@@ -454,7 +516,6 @@ export function ManagerDashboard({ userId, role, onLogout }: ManagerDashboardPro
         onSuccess={handleModalSuccess}
         userId={userId}
       />
-
       <AddCandidateModal
         isOpen={Boolean(editingCandidate)}
         onClose={() => setEditingCandidate(null)}
@@ -462,7 +523,7 @@ export function ManagerDashboard({ userId, role, onLogout }: ManagerDashboardPro
         candidate={editingCandidate || undefined}
         userId={userId}
       />
-    </div>
+    </main>
   )
 }
 
