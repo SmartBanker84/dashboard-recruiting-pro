@@ -1,6 +1,6 @@
 import Sidebar from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
-import '../globals.css';
+import './globals.css';
 import { AppProvider } from '@/components/context/AppContext';
 
 export default function RoleLayout({
