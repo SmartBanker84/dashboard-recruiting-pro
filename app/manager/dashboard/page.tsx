@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import ManagerDashboard from "@/components/ManagerDashboard";
 import { createClientSupabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/auth-helpers-nextjs";
 
 export default function ManagerDashboardPage() {
   const router = useRouter();
   const supabase = createClientSupabase();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -29,5 +30,13 @@ export default function ManagerDashboardPage() {
 
   if (!user) return null;
 
-  return <ManagerDashboard userId={user.id} role="manager" onLogout={handleSignOut} />;
+  return (
+    <ManagerDashboard
+      userId={user.id}
+      email={user.email ?? ""}
+      fullName={user.user_metadata?.full_name ?? ""}
+      role="manager"
+      onLogout={handleSignOut}
+    />
+  );
 }
