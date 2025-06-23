@@ -232,7 +232,13 @@ export default function DashboardPage() {
         {/* Dashboard Content */}
         <div className="animate-fade-in">
           {role === 'manager' && (
-            <ManagerDashboard userId={user.id} role={role} onLogout={handleSignOut} />
+            <ManagerDashboard
+              userId={user.id}
+              fullName={user.full_name}
+              email={user.email}
+              role={role}
+              onLogout={handleSignOut}
+            />
           )}
           {role === 'recruiter' && (
             <RecruitingDashboard userId={user.id} role="recruiter" onLogout={handleSignOut} />
