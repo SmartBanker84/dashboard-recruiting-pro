@@ -1,5 +1,5 @@
-import '../globals.css';
 'use client'
+import '../globals.css';
 
 import React from 'react'
 import { useParams, useRouter } from 'next/navigation'
