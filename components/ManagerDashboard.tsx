@@ -22,6 +22,7 @@ import { format, subDays, startOfMonth, endOfMonth } from 'date-fns'
 import { it } from 'date-fns/locale'
 
 import { KPICard, KPIGrid, KPIGridWithLoading } from './KPI'
+import KPIHeader from './KPIHeader'
 import { MonthlyChart } from './MonthlyChart'
 import { CVList } from './CVList'
 import { AddCandidateModal } from './AddCandidateModal'
@@ -86,7 +87,13 @@ export function ManagerDashboard({ userId, role, onLogout }: ManagerDashboardPro
       }
       
       if (kpiResult.data) {
-        setKpiData(kpiResult.data)
+        setKpiData({
+          total_candidates: kpiResult.data.totalCandidates,
+          new_candidates: kpiResult.data.newCandidates,
+          active_interviews: kpiResult.data.activeInterviews,
+          hired: kpiResult.data.hired,
+          conversion_rate: kpiResult.data.conversionRate,
+        })
       }
       
       if (monthlyResult.data) {
@@ -306,37 +313,18 @@ export function ManagerDashboard({ userId, role, onLogout }: ManagerDashboardPro
       </div>
 
       {/* Manager KPIs */}
-      <KPIGridWithLoading loading={loading}>
-        {kpiData && (
-          <>
-            <KPICard
-              title="Candidati Totali"
-              value={kpiData.totalCandidates}
-              change={managerMetrics?.monthlyGrowth}
-              icon={<Users className="h-6 w-6" />}
-              color="primary"
-            />
-            <KPICard
-              title="Nuovi Candidati"
-              value={kpiData.newCandidates}
-              icon={<UserCheck className="h-6 w-6" />}
-              color="success"
-            />
-            <KPICard
-              title="Colloqui Attivi"
-              value={kpiData.activeInterviews}
-              icon={<Clock className="h-6 w-6" />}
-              color="warning"
-            />
-            <KPICard
-              title="Tasso Conversione"
-              value={`${kpiData.conversionRate}%`}
-              icon={<Target className="h-6 w-6" />}
-              color="primary"
-            />
-          </>
-        )}
-      </KPIGridWithLoading>
+      {kpiData && (
+        <KPIHeader
+          loading={loading}
+          kpiData={{
+            totalCandidates: kpiData?.total_candidates || 0,
+            totalRecruiters: recruiters.length,
+            averageRAL: Math.round(managerMetrics?.avgSalary || 0),
+            conversionRate: kpiData?.conversion_rate || 0,
+          }}
+          managerMetrics={managerMetrics}
+        />
+      )}
 
       {/* Additional Manager Metrics */}
       {managerMetrics && (
