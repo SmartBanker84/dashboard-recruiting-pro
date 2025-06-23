@@ -86,6 +86,8 @@ export default function HomePage() {
       {user.role === 'manager' && (
         <Dashboard 
           userId={user.id}
+          email={user.email}
+          fullName={user.full_name}
           role="manager"
           onLogout={handleLogout}
         />
